@@ -212,24 +212,48 @@ export default class ImposterClass {
     }
 
     
+
+    // gets attribute or value of element, which can be on the page or iframe
+    async getAttribute(selector, attribute_name) {
+        this.page.waitForNavigation({waitUntil: 'networkidle2'})
+
+        let where = null;
+        let el = await this.page.$(selector);
+        if (el) {
+            return await this.getAttributeSimple(el, attribute_name)
+        }
+
+        const frames = this.page.frames();
+        for (const frame of frames) {
+            //const frame = frames[key];
+            const el = await frame.$(selector);
+            if (el) {
+                return this.getAttributeSimple(el, attribute_name, frame);
+            }
+        }
+
+        return false;
+    }
+
     // where = page or frame
     async getAttributeSimple(selector, attribute_name, where = false) {
         if (!where) {
             where = this.page;
         }
 
-        const el = await page.$(selector);
+        const el = ('string' === typeof selector) ? await page.$(selector) : selector;
         if (el) {
             if ('value' !== attribute_name) {
-                return await page.evaluate((element, attribute_name) => element.getAttribute(attribute_name), el, attribute_name)
+                return await where.evaluate((element, attribute_name) => element.getAttribute(attribute_name), el, attribute_name)
             } else {
-                return await page.evaluate((element) => element.value, el)
+                return await where.evaluate((element) => element.value, el)
             }
         } else {
             return false;
         }
     }
 
+    // get frame that startsWith
     async getFrame(startWith = '', debug = false) {
         this.page.waitForNavigation({waitUntil: 'networkidle2'})
         const frame = this.page.frames().find(f => {
