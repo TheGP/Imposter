@@ -140,6 +140,23 @@ export default class ImposterClass {
         await this.cursor.toggleRandomMove(true)
     }
 
+    async clickButton(text, timeout = 10_000) {
+        const button = await this.page.evaluateHandle((text) => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            return buttons.find(button => button.textContent.trim().toLowerCase() === text.toLowerCase());
+        }, text);
+
+        const isDisabled = await button.asElement().evaluate(element => element.disabled);
+
+        if (isDisabled) {
+            console.log('waiting for button to become enabled');
+            await this.wait(300);
+            return await this.clickButton(text, timeout);
+        }
+
+        return await this.click(button, timeout);
+    }
+
     // Navigating + Clicking on an element
     async click(selector, timeout = 10_000) {
         console.log('wait for', selector)
