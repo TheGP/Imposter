@@ -18,6 +18,7 @@ I welcome any help with improving this helper class (except rewriting in TypeScr
 * More human scrolling (need to investigate if different mouses has different  scrolling, message me to get debug script to test it)
 * Clicking on the visible element inside of boundingbox (sometimes the element has a lot of white space around it u can click, but it is not visible for user, so it should be used to click)
 * Support of horizontal scroll (message me to get debug script for mouse wheel positions)
+* Look for ::TODO:: blocks inside the code
 
 ## Installation
 
