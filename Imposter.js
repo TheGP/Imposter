@@ -119,7 +119,7 @@ export default class ImposterClass {
             await this.newPage();
         }
         await this.page.goto(url)
-        await this.waitRandom(700, 2100)
+        await this.waitRandom(0.7, 2.1)
     }
 
     async newPage() {
@@ -217,7 +217,7 @@ export default class ImposterClass {
         // No random moves as it exited
         await this.cursor.toggleRandomMove(false)
         // Waiting to emulate moving to closse button and clicking it
-        await this.waitRandom(1000, 2500)
+        await this.waitRandom(1, 2.5)
         // Safely closing the tab
         await this.page.close()
         await this.browser.close()
