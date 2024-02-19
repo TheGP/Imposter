@@ -385,19 +385,24 @@ export default class ImposterClass {
 
 
     // Get random number
-    async random(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+    random(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+    // alias
+    rand(min, max) {
+        return this.random(min, max);
     }
 
     // Wait random times
     async waitRandom(min, max) {
         const randomDelay = this.random(min, max);
+        console.log('randomDelay', randomDelay);
         await this.wait(randomDelay);
     }
 
     // Wait
-    async wait(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    async wait(s) {
+        return new Promise(resolve => setTimeout(resolve, 1000 * s));
     }
 }
 
