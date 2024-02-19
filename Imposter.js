@@ -130,13 +130,19 @@ export default class ImposterClass {
     // Navigating + typing
     async type(selector, string) {
         string = string.toString()
-        if ('string' === typeof selector) {
+
+        console.log('type to', selector);
+        const { el, target, type } = await this.findElementAnywhere(selector);
+        console.log('type=', type);
+        /*if ('string' === typeof selector) {
             await this.page.waitForSelector(selector, { timeout: 10_000 })
-        }
-        await this.scrollTo(selector)
-        await this.clickSimple(selector)
+        }*/
+        console.log('target', target, selector);
+        await this.scrollTo(el, target)
+        //return;
+        await this.clickSimple(el)
         await this.cursor.toggleRandomMove(false)
-        await this.typeSimple(selector, string)
+        await this.typeSimple(el, string)
         await this.cursor.toggleRandomMove(true)
     }
 
