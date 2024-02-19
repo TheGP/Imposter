@@ -62,6 +62,7 @@ export default class ImposterClass {
         this.puppeteer = puppeteer;
     }
 
+    // Connect to the browser
     async connect(webSocketLink) {
         this.browser = await puppeteer.connect({
             browserWSEndpoint: webSocketLink,
@@ -69,6 +70,7 @@ export default class ImposterClass {
         });
     }
 
+    // Launch the browser
     async launch(options) {
         if (!options.hasOwnProperty('defaultViewport')) {
             options.defaultViewport = { width: 1700, height: 1400 };
@@ -82,6 +84,7 @@ export default class ImposterClass {
         });
     }
 
+    // Finds the active tab and prepares it for work
     async attachToActiveTab(debug = false) {
         const pages = await this.browser.pages();
         // this will return list of active tab (which is pages object in puppeteer)
@@ -99,6 +102,7 @@ export default class ImposterClass {
         await this.attachAllToPage();
     }
 
+    // Attaches all needed helpers to the page
     async attachAllToPage() {
         await installMouseHelper(this.page);
         this.cursor = createCursor(this.page, await getRandomPagePoint(this.page), true)
@@ -122,6 +126,7 @@ export default class ImposterClass {
         await this.waitRandom(0.7, 2.1)
     }
 
+    // Opens new page
     async newPage() {
         this.page = await this.browser.newPage()
         this.attachAllToPage();
@@ -146,6 +151,7 @@ export default class ImposterClass {
         await this.cursor.toggleRandomMove(true)
     }
 
+    // Clicks button by text, supports inner html <button><span>Submit
     async clickButton(text, timeout = 10_000) {
         const button = await this.page.evaluateHandle((text) => {
             const buttons = Array.from(document.querySelectorAll('button'));
@@ -198,8 +204,6 @@ export default class ImposterClass {
         await typeInto(input, string, config)
     }
 
-    async scrollTo(selector) {
-        let res = await this.isElementInView(selector);
     // Scrolls to the element
     // ::TODO:: support of horizonal scroll
     async scrollTo(selector, target) {
@@ -247,6 +251,7 @@ export default class ImposterClass {
         } while (!(await isScrolledToBottom()) && Date.now() < finishTime);
     }
 
+    // close page with mouse going to the close button
     async close(ms) {
         // choosing random point on the length to emulate moving cursor to close tab
         const randomXExitPoint = Math.floor(Math.random() * (this.pageSize.width - 50 + 1)) + 50
@@ -362,7 +367,6 @@ export default class ImposterClass {
         return frame;
     }
 
-    // checks if element if in the view and gives directions where to scroll
     // Checks if element if in the view and gives directions where to scroll
     // ::TODO:: support of horizonal
     async isElementInView(selector, target = this.page) {
@@ -461,6 +465,7 @@ export default class ImposterClass {
         }
     }
 
+    // Shakes mouse
     async jitterMouse(options) {
         console.log('jitterMouse');
         if (!this.page) {
