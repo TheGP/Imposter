@@ -193,21 +193,31 @@ export default class ImposterClass {
 
     async scrollTo(selector) {
         let res = await this.isElementInView(selector);
+    // Scrolls to the element
+    // ::TODO:: support of horizonal scroll
+    async scrollTo(selector, target) {
+        let res = await this.isElementInView(selector, target);
 
         if (res.isInView) {
-            //console.log('element is in the view')
+            console.log('element is in the view')
         }
         
         while (!res.isInView) {
             console.log('scrolling to el', res.direction);
-            await this.scroller.scroll(1, res.direction);
-            res = await this.isElementInView(selector);
+            await this.waitRandom(0.1, 1.5);
+            const scroller = await humanScroll(target);
+            await scroller.scroll(1, res.direction);
+            res = await this.isElementInView(selector, target);
         }
     }
 
-    async scroll() {
+    // simple scroll down ::TODO:: dont pass scrolls to scroller, just iterate one scroll(1, 'down'); multiple times as it is humanized
+    async scroll(scrolls = 1) {
         console.log('scroll');
-        await this.scroller.scroll(1, 'ups');
+        await this.scroller.scroll(scrolls, 'down');
+        //await smartScroll(this.page, {distance: 100});
+    }
+    
     // scroll and read posts
     async read(howLong = 10) {
         const finishTime = Date.now() + howLong * 1000;
