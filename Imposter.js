@@ -159,11 +159,12 @@ export default class ImposterClass {
 
     // Navigating + Clicking on an element
     async click(selector, timeout = 10_000) {
-        console.log('wait for', selector)
-        if ('string' == typeof selector)
-            await this.page.waitForSelector(selector, { timeout: timeout });
-        await this.scrollTo(selector)
-        await this.cursor.click(selector, {
+        //console.log('wait for', selector)
+        //if ('string' == typeof selector) await this.page.waitForSelector(selector, { timeout: timeout });
+        const { el, target, type } = await this.findElementAnywhere(selector);
+
+        await this.scrollTo(el, target)
+        await this.cursor.click(el, {
             hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
             waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
         })
