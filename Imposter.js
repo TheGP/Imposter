@@ -151,29 +151,41 @@ export default class ImposterClass {
         await this.cursor.toggleRandomMove(true)
     }
 
-    // Clicks button by text, supports inner html <button><span>Submit
-    async clickButton(text, timeout = 10_000) {
-        const button = await this.page.evaluateHandle((text) => {
-            const buttons = Array.from(document.querySelectorAll('button'));
-            return buttons.find(button => button.textContent.trim().toLowerCase() === text.toLowerCase());
-        }, text);
+    // Clicks elements by text (uses includes so %text%), supports inner html <button><span>Submit
+    // ::TODO:: search for it in frame too
+    // ::TODO:: different match options?
+    async clickElement(selector, text, timeout = 10_000) {
+        const el = await this.page.evaluateHandle((selector, text) => {
+            const els = Array.from(document.querySelectorAll(selector));
+            //console.log('!els', els);
+            return els.find(el => {
+                //console.log('!text', el.textContent.trim().toLowerCase(), el.textContent.trim().toLowerCase().includes(text.toLowerCase()), text.toLowerCase());
+                return el.textContent.trim().toLowerCase().includes(text.toLowerCase())
+            });
+        }, selector, text);
 
-        const isDisabled = await button.asElement().evaluate(element => element.disabled);
+        const isDisabled = await el.asElement().evaluate(element => element.disabled);
 
         if (isDisabled) {
-            console.log('waiting for button to become enabled');
+            console.log('waiting for el to become enabled');
             await this.wait(300);
-            return await this.clickButton(text, timeout);
+            return await this.clickElement(selector, text, timeout);
         }
 
-        return await this.click(button, timeout);
+        return await this.click(el, timeout);
     }
 
     // Navigating + Clicking on an element
     async click(selector, timeout = 10_000) {
         //console.log('wait for', selector)
         //if ('string' == typeof selector) await this.page.waitForSelector(selector, { timeout: timeout });
-        const { el, target, type } = await this.findElementAnywhere(selector);
+        const { el, target, type } = ('string' === typeof selector) 
+                                        ? await this.findElementAnywhere(selector) 
+                                        : {
+                                             el : selector,
+                                             target : this.page,
+                                             type : 'page',
+                                          };
 
         await this.scrollTo(el, target)
         await this.cursor.click(el, {
