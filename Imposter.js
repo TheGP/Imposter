@@ -208,6 +208,26 @@ export default class ImposterClass {
     async scroll() {
         console.log('scroll');
         await this.scroller.scroll(1, 'ups');
+    // scroll and read posts
+    async read(howLong = 10) {
+        const finishTime = Date.now() + howLong * 1000;
+
+        const isScrolledToBottom = async () => {
+            const distanceToBottom = await this.page.evaluate(() => {
+              const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+              return scrollHeight - scrollTop - clientHeight;
+            });
+            return distanceToBottom < 100; // Adjust the threshold as needed
+        };
+        
+        console.log('start reading', await isScrolledToBottom(), (finishTime > Date.now()));
+
+        // ::TRICKY:: normal 'while' is not paused by await
+        do {
+            console.log('reading');
+            await this.waitRandom(3, 10);
+            await this.scroller.scroll(1, 'down');
+        } while (!(await isScrolledToBottom()) && Date.now() < finishTime);
     }
 
     async close(ms) {
@@ -228,16 +248,49 @@ export default class ImposterClass {
         await this.page.select(selector, value.toString())
     }
 
-    
-
     // gets attribute or value of element, which can be on the page or iframe
     async getAttribute(selector, attribute_name) {
-        this.page.waitForNavigation({waitUntil: 'networkidle2'})
+        const { el, target } = await this.findElementAnywhere(selector);
 
+        if (el) {
+            return this.getAttributeSimple(el, attribute_name, target);
+        }
+
+        return false;
+    }
+
+    // is there the element anywhere on the page / frame?
+    async isThere(selector) {
+        const { el, target } = await this.findElementAnywhere(selector);
+        if (el && target) {
+            return true;
+        }
+        return false;
+    }
+
+    // searches and returns element, first on page, than in every frame
+    // ::TODO:: maybe wait somehow to page get loaded, waitForNavigation didnt work on the website I was testing it on
+    async findElementAnywhere(selector) {
+        /*
+        try {
+            await this.cursor.toggleRandomMove(false); // so it will not trigger track mouse events
+            console.log('waiting');
+            await this.page.waitForNavigation({waitUntil: 'domcontentloaded'}); // networkidle2 - doesnt work on Linkedin because of track requests
+            console.log('finish waiting');
+            await this.cursor.toggleRandomMove(true);
+        } catch (e) {
+            console.log('waitForNavigation triggered 30s timeout');
+        }
+        */
+        
         let where = null;
         let el = await this.page.$(selector);
         if (el) {
-            return await this.getAttributeSimple(el, attribute_name)
+            return {
+                target : this.page,
+                el : el,
+                type : 'page',
+            };
         }
 
         const frames = this.page.frames();
@@ -245,12 +298,22 @@ export default class ImposterClass {
             //const frame = frames[key];
             const el = await frame.$(selector);
             if (el) {
-                return this.getAttributeSimple(el, attribute_name, frame);
+                return {
+                    target : frame,
+                    el : el,
+                    type : 'frame',
+                };
             }
         }
 
-        return false;
+        return {
+            target : false,
+            el : false,
+            type : 'page',
+        };
     }
+
+
 
     // where = page or frame
     async getAttributeSimple(selector, attribute_name, where = false) {
@@ -283,48 +346,92 @@ export default class ImposterClass {
     }
 
     // checks if element if in the view and gives directions where to scroll
-    async isElementInView(selector) {
+    // Checks if element if in the view and gives directions where to scroll
+    // ::TODO:: support of horizonal
+    async isElementInView(selector, target = this.page) {
+        console.log('isElementInView', selector);
         const elementHandle = ('string' === typeof selector)
-                                    ? await this.page.$(selector)
+                                    ? await target.$(selector)
                                     : selector;
       
         if (!elementHandle) {
             console.error(`Element with selector "${selector}" not found.`);
             return false;
         }
-      
-        const boundingBox = await elementHandle.boundingBox();
+
+        // ::TRICKY:: do not use puppeteer's function as it calculates y for a whole page, not iframe only
+        const boundingBox = await target.evaluate(element => {
+            console.log(element,  element.getBoundingClientRect());
+            return JSON.parse(JSON.stringify(element.getBoundingClientRect()))
+        }, elementHandle);
       
         if (!boundingBox) {
             console.error(`Could not retrieve bounding box for element with selector "${selector}".`);
             return false;
         }
+        const viewportHeight = await target.evaluate(() => {
+            return window.innerHeight;
+        });
 
-        if (!this.page.hasOwnProperty('viewport')) {
-            return { isInView: true, direction: 'up' };
-        }
-      
         // Check if the element is in the viewport
         const isInView = (
             boundingBox.x >= 0 &&
             boundingBox.y >= 0 &&
-            boundingBox.x + boundingBox.width <= this.page.viewport().width &&
-            boundingBox.y + boundingBox.height <= this.page.viewport().height
+            boundingBox.y + boundingBox.height <= viewportHeight
         );
 
-        console.log('boundingBox.y', boundingBox.y, this.page.viewport().height);
+        console.log('boundingBox.y', boundingBox.y, 'page height:', viewportHeight);
 
         // Determine the direction
-        const direction = boundingBox.y + boundingBox.height < (this.page.viewport().height / 2) ? 'up' : 'down';
+        const direction = boundingBox.y + boundingBox.height < (viewportHeight / 2) ? 'up' : 'down';
 
         //console.log(elementHandle, direction);
         return { isInView: isInView, direction: direction };
     }
 
 
+    /*
+    Find the first element that is currently on the screen and most visible (for example, is useful to see which post is currently user reading)
+    window.innerHeight: 900
+    fully visible:        b height 172.859375 b top 389.234375 b bottom 562.09375 pageYOffset 2014
+    top is not visible:   b height 172.859375 b top -10.765625 b bottom 162.09375 pageYOffset 2414
+    bottom is not visible b height 172.859375 b top 789.234375 b bottom 962.09375 pageYOffset 1614
+    */
+    async findFirstElementOnScreen(selector) {
+        const elsHandles = await this.page.$$(selector);
+        const els = [];
+        for (let elementHandle of elsHandles) {
+            // Use elementHandle
+            // For example, you can evaluate on the context of the element
+            const el = {
+                el: elementHandle,
+                visible: await this.page.evaluate(el => {
+                    const boundingBox = el.getBoundingClientRect();
+                    const isVisible = (
+                        (boundingBox.top >= 0 && boundingBox.top <= window.innerHeight) ||
+                        (boundingBox.bottom >= 0 && boundingBox.bottom <= window.innerHeight)
+                    );
+                    console.log('b height', boundingBox.height, 'b top', boundingBox.top, 'b bottom', boundingBox.bottom, 'pageYOffset', window.scrollY, 'innerHeight', window.innerHeight)
+                    // calculating visile percentage of element:
+                    const invisibleTop = (boundingBox.top >= 0) ? 0 : boundingBox.top;
+                    const invisibleBottom = (boundingBox.bottom < window.innerHeight) ? 0 : window.innerHeight - boundingBox.bottom;
+                    console.log('invisibleTop', invisibleTop, 'invisibleBottom', invisibleBottom)
+                    const heightVisible = boundingBox.height + invisibleTop + invisibleBottom; // it will be subtracted because its negative
+    
+                    return Math.floor(heightVisible / (boundingBox.height / 100));
+                }, elementHandle),
+            };
+            els.push(el);
+        }
+        
+        const foundEls = els.filter(el => el !== null);
+        const mostVisibleEl = foundEls.reduce((acc, curr) => curr.visible > acc.visible ? curr : acc);
 
+        console.log('el', mostVisibleEl);
+        return mostVisibleEl.el;
+    }
 
-
+    // Shakes mouse a bit, trying to emulate mouse shake while grabbing it
     async shakeMouse() {
         let i = 0;
         const j = Math.random() * (4 - 2) + 2;
@@ -376,6 +483,36 @@ export default class ImposterClass {
     }
 
 
+    async getParamsArkoseCaptcha() {
+
+        // https://client-api.arkoselabs.com [name="fc-token"]
+        // https://client-api.arkoselabs.com submit button
+        // waiting user to solve catcha before clicking the buttons
+        const fcToken = await this.getAttribute('[name="fc-token"]', 'value')  // FunCaptcha-Token
+        //console.log('CAPTCHA');
+        console.log('fcToken', fcToken);
+        //console.log('pageurl', Imposter.page.url());
+        return;
+        const matches = fcToken.match(/pk=([^|]+)\|.*?surl=([^|]+)/);
+        if (!matches) {
+            return false;
+        }
+        const pk = matches[1];
+        const surl = decodeURIComponent(matches[2]);
+        /*
+        const mainFrame = await Imposter.page.mainFrame();
+        const childFrames = mainFrame.childFrames();
+        childFrames.forEach((frame, index) => {
+            console.log(`Frame ${index + 1} URL: ${frame.url()}`);
+        });
+        */
+
+        return {
+            url: Imposter.page.url(),
+            sitekey: pk, // websitePublicKey, pk, sitekey
+            surl: surl,
+        }
+    }
 
 
 
