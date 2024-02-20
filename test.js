@@ -32,6 +32,9 @@ describe('ImposterClass', () => {
     test('should not find button with non-existing text', async () => {
         expect(await i.isThere(`button123`, `Submit iframe 3`, 0)).toBe(false);
     });
+    test('h1 with Event tracking should exist', async () => {
+        expect(await i.isThere(`h1`, `Event tracking`, 0)).toBe(true);
+    });
 
 
     test('should find button with text findElementAnywhere', async () => {
