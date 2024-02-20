@@ -155,14 +155,7 @@ export default class ImposterClass {
     // ::TODO:: search for it in frame too
     // ::TODO:: different match options?
     async clickElement(selector, text, timeout = 10_000) {
-        const el = await this.page.evaluateHandle((selector, text) => {
-            const els = Array.from(document.querySelectorAll(selector));
-            //console.log('!els', els);
-            return els.find(el => {
-                //console.log('!text', el.textContent.trim().toLowerCase(), el.textContent.trim().toLowerCase().includes(text.toLowerCase()), text.toLowerCase());
-                return el.textContent.trim().toLowerCase().includes(text.toLowerCase())
-            });
-        }, selector, text);
+        const { el, target } = await this.findElementWithTextAnywhere(selector, text, timeout = 10_000);
 
         const isDisabled = await el.asElement().evaluate(element => element.disabled);
 
@@ -294,50 +287,60 @@ export default class ImposterClass {
     }
 
     // is there the element anywhere on the page / frame?
-    async isThere(selector) {
-        const { el, target } = await this.findElementAnywhere(selector);
-        if (el && target) {
-            return true;
-        }
-        return false;
+    async isThere(selector, text = null, timeout = 10) {
+        const { el, target } = await this.findElementAnywhere(selector, text, 1);
+        return (el && el.asElement()) ? true : false;
     }
 
-    // searches and returns element, first on page, than in every frame
-    // ::TODO:: maybe wait somehow to page get loaded, waitForNavigation didnt work on the website I was testing it on
-    async findElementAnywhere(selector) {
-        /*
-        try {
-            await this.cursor.toggleRandomMove(false); // so it will not trigger track mouse events
-            console.log('waiting');
-            await this.page.waitForNavigation({waitUntil: 'domcontentloaded'}); // networkidle2 - doesnt work on Linkedin because of track requests
-            console.log('finish waiting');
-            await this.cursor.toggleRandomMove(true);
-        } catch (e) {
-            console.log('waitForNavigation triggered 30s timeout');
-        }
-        */
-        
-        let where = null;
-        let el = await this.page.$(selector);
-        if (el) {
+    // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
+    async findElementAnywhere(selector, text = null, timeout = 10, startTime = Date.now()) {
+        const el = await this.page.evaluateHandle((selector, text) => {
+            const els = Array.from(document.querySelectorAll(selector));
+            if (text) {
+                return els.find(el => {
+                    return el.textContent.trim().toLowerCase().includes(text.toLowerCase())
+                });
+            } else {
+                return els[0];
+            }
+        }, selector, text);
+
+        if (el.asElement()) {
             return {
                 target : this.page,
                 el : el,
                 type : 'page',
             };
+        } else {
+            // searching in frames
+            const frames = this.page.frames();
+            for (const frame of frames) {
+                const el = await frame.evaluateHandle((selector, text) => {
+                    const els = Array.from(document.querySelectorAll(selector));
+                    if (text) {
+                        return els.find(el => {
+                            //console.log('el', el, el.textContent.trim().toLowerCase())
+                            return el.textContent.trim().toLowerCase().includes(text.toLowerCase())
+                        });
+                    } else {
+                        return els[0];
+                    }
+                }, selector, text);
+
+                if (el.asElement()) {
+                    return {
+                        target : frame,
+                        el : el,
+                        type : 'frame',
+                    };
+                }
+            }
         }
 
-        const frames = this.page.frames();
-        for (const frame of frames) {
-            //const frame = frames[key];
-            const el = await frame.$(selector);
-            if (el) {
-                return {
-                    target : frame,
-                    el : el,
-                    type : 'frame',
-                };
-            }
+        // trying again in 1 sec if time out is not yet reached
+        if (Date.now() <= startTime + timeout * 1000) {
+            await this.wait(1);
+            return this.findElementAnywhere(selector, text, timeout, startTime);
         }
 
         return {
