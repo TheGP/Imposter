@@ -134,7 +134,7 @@ export default class ImposterClass {
 
     // Navigating + typing
     async type(selector, string) {
-        string = string.toString()
+        string = String(string);
 
         console.log('type to', selector);
         const { el, target, type } = await this.findElementAnywhere(selector);
