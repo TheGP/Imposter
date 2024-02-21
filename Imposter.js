@@ -151,29 +151,15 @@ export default class ImposterClass {
         await this.cursor.toggleRandomMove(true)
     }
 
-    // Clicks elements by text (uses includes so %text%), supports inner html <button><span>Submit
-    // ::TODO:: search for it in frame too
-    // ::TODO:: different match options?
-    async clickElement(selector, text, timeout = 10_000) {
-        const { el, target } = await this.findElementWithTextAnywhere(selector, text, timeout = 10_000);
-
-        const isDisabled = await el.asElement().evaluate(element => element.disabled);
-
-        if (isDisabled) {
-            console.log('waiting for el to become enabled');
-            await this.wait(300);
-            return await this.clickElement(selector, text, timeout);
-        }
-
-        return await this.click(el, timeout);
-    }
-
-    // Navigating + Clicking on an element
-    async click(selector, timeout = 10_000) {
+    // Navigating + Clicking on an element, text inside of the element is optional, supports inner html <button><span>Submit
+    // ::TODO:: different text match options?
+    async click(selector, text = null, timeout = 10_000) {
+        //await this.waitRandom(1, 3);
+        await this.waitForNetworkIdle(1);
         //console.log('wait for', selector)
         //if ('string' == typeof selector) await this.page.waitForSelector(selector, { timeout: timeout });
         const { el, target, type } = ('string' === typeof selector) 
-                                        ? await this.findElementAnywhere(selector) 
+                                        ? await this.findElementAnywhere(selector, text, timeout) 
                                         : {
                                              el : selector,
                                              target : this.page,
@@ -181,6 +167,14 @@ export default class ImposterClass {
                                           };
 
         await this.scrollTo(el, target)
+
+        const isDisabled = await el.asElement().evaluate(element => element.disabled);
+        if (isDisabled) {
+            console.log('waiting for el to become enabled');
+            await this.wait(300);
+            return await this.click(selector, text, timeout);
+        }
+
         await this.cursor.click(el, {
             hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
             waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
