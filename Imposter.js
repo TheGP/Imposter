@@ -154,8 +154,7 @@ export default class ImposterClass {
     // Navigating + Clicking on an element, text inside of the element is optional, supports inner html <button><span>Submit
     // ::TODO:: different text match options?
     async click(selector, text = null, timeout = 10_000) {
-        //await this.waitRandom(1, 3);
-        await this.waitForNetworkIdle(1);
+        await this.waitRandom(1, 3);
         //console.log('wait for', selector)
         //if ('string' == typeof selector) await this.page.waitForSelector(selector, { timeout: timeout });
         const { el, target, type } = ('string' === typeof selector) 
@@ -166,12 +165,17 @@ export default class ImposterClass {
                                              type : 'page',
                                           };
 
+        if (!el) {
+            throw 'NO ELEMENT HAS FOUND';
+            return;
+        }
+
         await this.scrollTo(el, target)
 
         const isDisabled = await el.asElement().evaluate(element => element.disabled);
         if (isDisabled) {
             console.log('waiting for el to become enabled');
-            await this.wait(300);
+            await this.wait(0.3);
             return await this.click(selector, text, timeout);
         }
 
@@ -179,6 +183,7 @@ export default class ImposterClass {
             hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
             waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
         })
+            await this.waitTillHTMLRendered();
     }
 
     // Clicking on an element
@@ -288,6 +293,7 @@ export default class ImposterClass {
 
     // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
     async findElementAnywhere(selector, text = null, timeout = 10, startTime = Date.now()) {
+        try {
         const el = await this.page.evaluateHandle((selector, text) => {
             const els = Array.from(document.querySelectorAll(selector));
             if (text) {
@@ -342,9 +348,13 @@ export default class ImposterClass {
             el : false,
             type : 'page',
         };
+        } catch (e) {
+            if (e.toString().includes('Execution context was destroyed')) {
+                console.log('context error, restarting...')
+                return await this.findElementAnywhere(selector, text, timeout); // resetting only startTime
+            }
+        }
     }
-
-
 
     // where = page or frame
     async getAttributeSimple(selector, attribute_name, where = false) {
@@ -545,10 +555,39 @@ export default class ImposterClass {
         }
     }
 
+    // Waiting for the page to be rendered
+    // https://stackoverflow.com/questions/52497252/puppeteer-wait-until-page-is-completely-loaded
+    async waitTillHTMLRendered(timeout = 15) {
+        console.log('waitTillHTMLRendered');
+        const checkDurationMsecs = 1;
+        const maxChecks = timeout / checkDurationMsecs;
+        let lastHTMLSize = 0;
+        let checkCounts = 1;
+        let countStableSizeIterations = 0;
+        const minStableSizeIterations = 3;
+      
+        while(checkCounts++ <= maxChecks){
+            let html = await this.page.content();
+            let currentHTMLSize = html.length; 
 
+            let bodyHTMLSize = await this.page.evaluate(() => document.body.innerHTML.length);
 
+            console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
 
+            if(lastHTMLSize != 0 && currentHTMLSize == lastHTMLSize) 
+                countStableSizeIterations++;
+            else 
+                countStableSizeIterations = 0; //reset the counter
 
+            if(countStableSizeIterations >= minStableSizeIterations) {
+            console.log("Page rendered fully..");
+            break;
+            }
+
+            lastHTMLSize = currentHTMLSize;
+            await this.wait(checkDurationMsecs);
+        }  
+    }
 
 
 
