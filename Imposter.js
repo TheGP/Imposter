@@ -304,7 +304,21 @@ export default class ImposterClass {
             const els = Array.from(document.querySelectorAll(selector));
             if (text) {
                 return els.find(el => {
-                    return el.textContent.trim().toLowerCase().includes(text.toLowerCase())
+                    // checking if the element is visible, otherwise user cant click it anyway
+                    const style = getComputedStyle(el);
+                    const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
+                    el.offsetWidth > 0 && el.offsetHeight > 0);
+
+                    /*
+                    console.log(
+                        el.textContent.trim().toLowerCase(), 
+                        'searching for=', 
+                        text.toLowerCase(), 
+                        el.textContent.trim().toLowerCase().includes(text.toLowerCase()),
+                        isVisible
+                    );
+                    */
+                    return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
                 });
             } else {
                 return els[0];
