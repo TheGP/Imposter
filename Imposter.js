@@ -610,34 +610,46 @@ export default class ImposterClass {
     // https://stackoverflow.com/questions/52497252/puppeteer-wait-until-page-is-completely-loaded
     async waitTillHTMLRendered(timeout = 15) {
         console.log('waitTillHTMLRendered');
-        const checkDurationMsecs = 1;
-        const maxChecks = timeout / checkDurationMsecs;
-        let lastHTMLSize = 0;
-        let checkCounts = 1;
-        let countStableSizeIterations = 0;
-        const minStableSizeIterations = 3;
-      
-        while(checkCounts++ <= maxChecks){
-            let html = await this.page.content();
-            let currentHTMLSize = html.length; 
 
-            let bodyHTMLSize = await this.page.evaluate(() => document.body.innerHTML.length);
+        try {
+            const checkDurationMsecs = 1;
+            const maxChecks = timeout / checkDurationMsecs;
+            let lastHTMLSize = 0;
+            let checkCounts = 1;
+            let countStableSizeIterations = 0;
+            const minStableSizeIterations = 3;
+        
+            while (checkCounts++ <= maxChecks) {
+                let html = await this.page.content();
+                let currentHTMLSize = html.length; 
 
-            console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
+                let bodyHTMLSize = await this.page.evaluate(() => document.body.innerHTML.length);
 
-            if(lastHTMLSize != 0 && currentHTMLSize == lastHTMLSize) 
-                countStableSizeIterations++;
-            else 
-                countStableSizeIterations = 0; //reset the counter
+                console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
 
-            if(countStableSizeIterations >= minStableSizeIterations) {
-            console.log("Page rendered fully..");
-            break;
+                // if change is small - do not take it into account
+                if (lastHTMLSize != 0 && (currentHTMLSize == lastHTMLSize || 30 >= Math.abs(currentHTMLSize - lastHTMLSize))) {
+                    countStableSizeIterations++;
+                } else {
+                    countStableSizeIterations = 0; //reset the counter
+                }
+
+                if(countStableSizeIterations >= minStableSizeIterations) {
+                    console.log("Page rendered fully..");
+                    break;
+                }
+
+                lastHTMLSize = currentHTMLSize;
+                await this.wait(checkDurationMsecs);
             }
+        } catch (e) {
+            if (e.toString().includes('Execution context was destroyed')) {
+                console.log('context error, restarting...')
+                return await this.waitTillHTMLRendered(timeout);
+            }
+        }
+    }
 
-            lastHTMLSize = currentHTMLSize;
-            await this.wait(checkDurationMsecs);
-        }  
     }
 
 
