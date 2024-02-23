@@ -34,6 +34,7 @@ export default class ImposterClass {
     cursor;
     scroller;
     pageSize = { width : 0, height: 0 };
+    dictionary = {};
     behavior = {
         mouse: {
             hesitation: { min: 50, max: 2000 },
@@ -154,6 +155,7 @@ export default class ImposterClass {
     // Navigating + Clicking on an element, text inside of the element is optional, supports inner html <button><span>Submit
     // ::TODO:: different text match options?
     async click(selectorOrObj, text = null, timeout = 10_000) {
+        text = this.translate(text);
         await this.waitRandom(1, 3);
         //await this.waitForNetworkIdle(1);
         //console.log('wait for', selectorOrObj)
@@ -299,6 +301,8 @@ export default class ImposterClass {
 
     // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
     async findElementAnywhere(selector, text = null, timeout = 10, startTime = Date.now()) {
+        text = this.translate(text);
+
         try {
         const el = await this.page.evaluateHandle((selector, text) => {
             const els = Array.from(document.querySelectorAll(selector));
@@ -377,6 +381,7 @@ export default class ImposterClass {
     }
 
     async elFindClosestParent(selectorChild, selectorParent, childText = null) {
+        childText = this.translate(childText);
         const { el, target, type } = await this.findElementAnywhere(selectorChild, childText);
 
         return {
@@ -673,6 +678,17 @@ export default class ImposterClass {
     // Wait
     async wait(s) {
         return new Promise(resolve => setTimeout(resolve, 1000 * s));
+    }
+
+    // Translating string based on dictionary
+    translate(string) {
+        if ('string' !== typeof string) return string;
+
+        return (this.dictionary.hasOwnProperty(string)) ? this.dictionary[string] : string;
+    }
+
+    setDictionary(dictionary) {
+        this.dictionary = dictionary;
     }
 }
 
