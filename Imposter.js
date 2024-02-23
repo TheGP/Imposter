@@ -137,7 +137,7 @@ export default class ImposterClass {
         string = String(string);
 
         console.log('type to', selector);
-        const { el, target, type } = await this.findElementAnywhere(selector);
+        const { el, target, type } = ('object' === typeof selector) ? selector : await this.findElementAnywhere(selector);
         console.log('type=', type);
         /*if ('string' === typeof selector) {
             await this.page.waitForSelector(selector, { timeout: 10_000 })
@@ -153,17 +153,23 @@ export default class ImposterClass {
 
     // Navigating + Clicking on an element, text inside of the element is optional, supports inner html <button><span>Submit
     // ::TODO:: different text match options?
-    async click(selector, text = null, timeout = 10_000) {
+    async click(selectorOrObj, text = null, timeout = 10_000) {
         await this.waitRandom(1, 3);
-        //console.log('wait for', selector)
-        //if ('string' == typeof selector) await this.page.waitForSelector(selector, { timeout: timeout });
-        const { el, target, type } = ('string' === typeof selector) 
-                                        ? await this.findElementAnywhere(selector, text, timeout) 
-                                        : {
-                                             el : selector,
-                                             target : this.page,
-                                             type : 'page',
-                                          };
+        //await this.waitForNetworkIdle(1);
+        //console.log('wait for', selectorOrObj)
+        //if ('string' == typeof selectorOrObj) await this.page.waitForSelector(selectorOrObj, { timeout: timeout });
+        const { el, target, type } = ('string' === typeof selectorOrObj) 
+                                        ? await this.findElementAnywhere(selectorOrObj, text, timeout) 
+                                        : ('object' == typeof selector) 
+                                            ? {
+                                                target : this.page,
+                                                type : 'page',
+                                                ...selectorOrObj 
+                                            } : {
+                                                el : selectorOrObj,
+                                                target : this.page,
+                                                type : 'page',
+                                            };
 
         if (!el) {
             throw 'NO ELEMENT HAS FOUND';
@@ -176,7 +182,7 @@ export default class ImposterClass {
         if (isDisabled) {
             console.log('waiting for el to become enabled');
             await this.wait(0.3);
-            return await this.click(selector, text, timeout);
+            return await this.click(selectorOrObj, text, timeout);
         }
 
         await this.cursor.click(el, {
