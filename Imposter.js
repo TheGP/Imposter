@@ -376,6 +376,37 @@ export default class ImposterClass {
         }
     }
 
+    async elFindClosestParent(selectorChild, selectorParent, childText = null) {
+        const { el, target, type } = await this.findElementAnywhere(selectorChild, childText);
+
+        return {
+            el : await target.evaluateHandle((el, selector) => {
+                console.log('!!!', el.closest(selector));
+                return el.closest(selector);
+            }, el, selectorParent),
+            target: target,
+            type : type,
+        }
+    }
+
+    // el = selector | element{}
+    // finds child of the element
+    async elFindChild(elObjOrSelector, selectorChild) {
+        const { el, target } = ('object' === typeof elObjOrSelector) 
+                                    ? elObjOrSelector 
+                                    : await this.findElementAnywhere(elObjOrSelector);
+
+        const res = await target.evaluateHandle((el, selector) => {
+            console.log('!!!', el.querySelector(selector));
+            return el.querySelector(selector);
+        }, el, selectorChild);
+
+        return {
+            el: res,
+            target
+        }
+    }
+
     // where = page or frame
     async getAttributeSimple(selector, attribute_name, where = false) {
         if (!where) {
