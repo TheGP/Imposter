@@ -154,7 +154,7 @@ export default class ImposterClass {
 
     // Navigating + Clicking on an element, text inside of the element is optional, supports inner html <button><span>Submit
     // ::TODO:: different text match options?
-    async click(selectorOrObj, text = null, timeout = 10_000) {
+    async click(selectorOrObj, text = null, timeout = 10) {
         text = this.translate(text);
         await this.waitRandom(1, 3);
         //await this.waitForNetworkIdle(1);
