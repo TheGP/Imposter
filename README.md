@@ -109,94 +109,73 @@ Creates a new instance of the `ImposterClass`.
 
 ## Methods
 
-### `type(selector: string, string: string)`
 
-Types a string into the specified selector.
+## Methods
 
-### `clickButton(text: string, timeout: number = 10000)`
+### `connect(webSocketLink: string): Promise<void>`
 
-Clicks on a button with the specified text.
+Connects to the browser using the provided WebSocket link.
 
-### `click(selector: string, timeout: number = 10000)`
+### `launch(options: Object): Promise<void>`
 
-Clicks on an element specified by the selector.
+Launches a new browser instance with the provided options.
 
-### `scroll(scrolls: number = 1)`
+### `attachToActiveTab(debug: boolean = false): Promise<void>`
 
-Scrolls the page.
+Finds the active tab and prepares it for work.
 
-### `read(howLong: number = 10)`
+### `attachAllToPage(): Promise<void>`
 
-Simulates reading behavior for a specified duration.
+Attaches all necessary helpers to the active page.
 
-### `connect(webSocketLink: string)`
+### `setBehaviorFingerprint(behavior: Object): Promise<void>`
 
-Connects to an existing browser instance via WebSocket.
+Sets behavior fingerprint for simulating human-like behaviors.
 
-### `launch(options: object)`
+### `goto(url: string): Promise<void>`
 
-Launches a new browser instance with specified options.
+Navigates to the specified URL.
 
-### `attachToActiveTab(debug: boolean = false)`
-
-Attaches to the active tab of the browser.
-
-### `attachAllToPage()`
-
-Attaches mouse and scroll functionality to the current page.
-
-### `setBehaviorFingerprint(behavior: object)`
-
-Sets behavior configurations for mouse movements and typing.
-
-### `goto(url: string)`
-
-Navigates to a specified URL.
-
-### `newPage()`
+### `newPage(): Promise<void>`
 
 Opens a new page.
 
-### `close(ms: number)`
+### `type(selector: string|Object, string: string): Promise<void>`
 
-Closes the page and browser after a specified delay.
+Simulates typing into a specified element.
 
-### `select(selector: string, value: string)`
+### `click(selectorOrObj: string|Object, text: string|null = null, timeout: number = 10): Promise<void>`
 
-Selects an option from a dropdown menu.
+Simulates clicking on a specified element.
 
-### `getAttribute(selector: string, attribute_name: string)`
+### `scrollTo(selector: string|Object, target: Object = this.page): Promise<void>`
 
-Gets the attribute value of an element specified by the selector.
+Scrolls to a specified element.
 
-### `isThere(selector: string)`
+### `scroll(scrolls: number = 1): Promise<void>`
 
-Checks if an element specified by the selector exists on the page.
+Scrolls down the page by a specified number of scrolls.
 
-### `getFrame(startWith: string = '', debug: boolean = false)`
+### `read(howLong: number = 10): Promise<void>`
 
-Gets a frame starting with the specified URL prefix.
+Reads content by scrolling for a specified duration.
 
-### `shakeMouse()`
+### `close(ms?: number): Promise<void>`
 
-Simulates shaking the mouse cursor.
+Closes the current page.
 
-### `jitterMouse(options: object)`
+### `select(selector: string, value: string|number): Promise<void>`
 
-Simulates jittery mouse movements.
+Selects an option from a dropdown element.
 
-### `getParamsArkoseCaptcha()`
+### `getAttribute(selector: string|Object, attribute_name: string): Promise<string|boolean>`
 
-Gets parameters required for solving an Arkose CAPTCHA.
+Gets the value of the specified attribute of an element.
 
-### `random(min: number, max: number)`
+### `isThere(selector: string, text: string|null = null, timeout: number = 10): Promise<boolean>`
 
-Generates a random number between the specified minimum and maximum values.
+Checks if the specified element is present on the page.
 
-### `waitRandom(min: number, max: number)`
+### `find(selector: string, text: string|null = null, timeout: number = 10): Promise<Object|null>`
 
-Waits for a random duration between the specified minimum and maximum values.
-
-### `wait(ms: number)`
-
-Waits for the specified duration in milliseconds.
+Finds the specified element anywhere on the page or within frames.
