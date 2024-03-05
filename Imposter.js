@@ -314,7 +314,9 @@ export default class ImposterClass {
 
     // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
     async findElementAnywhere(selector, text = null, timeout = 10, startTime = Date.now()) {
+        selector = this.tryTranslate(selector);
         text = this.translate(text);
+        console.log(`findElementAnywhere`, selector);
 
         try {
         const el = await this.page.evaluateHandle((selector, text) => {
