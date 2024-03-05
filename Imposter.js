@@ -717,8 +717,20 @@ export default class ImposterClass {
     // Translating string based on dictionary
     translate(string) {
         if ('string' !== typeof string) return string;
-
         return (this.dictionary.hasOwnProperty(string)) ? this.dictionary[string] : string;
+    }
+
+    // Translating text even it is inside the string like `input[placeholder="Ex: Boston University"]`
+    tryTranslate(string) {
+        if ('string' !== typeof string) return string;
+
+        console.log('tryTranslate', string);
+        for (const key in this.dictionary) {
+            //console.log('key=', key);
+            string = string.replace(key, this.dictionary[key]);
+            //console.log('after replacement=', string);
+        }
+        return string;
     }
 
     setDictionary(dictionary) {
