@@ -693,6 +693,15 @@ export default class ImposterClass {
         return this.random(min, max);
     }
 
+    // Get random integer number
+    randomInteger(min, max) {
+        return Math.floor(this.rand(min, max));
+    }
+    // alias
+    randInt(min, max) {
+        return this.randomInteger(min, max);
+    }
+
     // Wait random times
     async waitRandom(min, max) {
         const randomDelay = this.random(min, max);
