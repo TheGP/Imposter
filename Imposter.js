@@ -442,7 +442,13 @@ export default class ImposterClass {
             if ('value' !== attribute_name) {
                 return await where.evaluate((element, attribute_name) => element.getAttribute(attribute_name), el, attribute_name)
             } else {
-                return await where.evaluate((element) => element.value, el)
+                // checking if it is checkbox
+                const type = await where.evaluate((element) => element.type || null, el);
+                if ('checkbox' === type) {
+                    return await where.evaluate((element) => element.checked, el);
+                } else {
+                    return await where.evaluate((element) => element.value, el);
+                }
             }
         } else {
             return false;
