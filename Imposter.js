@@ -425,6 +425,12 @@ export default class ImposterClass {
         }
     }
 
+    // Finds element near by
+    async findElNearBy(selectorChild, childText, selectorParent, selectorChild2) {
+        const parentEl = await this.findClosestParentEl(selectorChild, selectorParent, childText);
+        return await this.findChildEl(parentEl, selectorChild2);
+    }
+
     // where = page or frame
     async getAttributeSimple(selector, attribute_name, where = false) {
         if (!where) {
