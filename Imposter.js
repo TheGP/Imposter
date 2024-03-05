@@ -162,7 +162,7 @@ export default class ImposterClass {
         //if ('string' == typeof selectorOrObj) await this.page.waitForSelector(selectorOrObj, { timeout: timeout });
         const { el, target, type } = ('string' === typeof selectorOrObj) 
                                         ? await this.findElementAnywhere(selectorOrObj, text, timeout) 
-                                        : ('object' == typeof selector) 
+                                        : ('object' === typeof selectorOrObj && selectorOrObj.hasOwnProperty('el')) 
                                             ? {
                                                 target : this.page,
                                                 type : 'page',
