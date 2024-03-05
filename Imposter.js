@@ -278,8 +278,21 @@ export default class ImposterClass {
     }
 
     async select(selector, value) {
-        console.log('in imposter', selector, value.toString(), typeof value.toString());
-        await this.page.select(selector, value.toString())
+        console.log('select', selector, value);
+
+        await this.click(selector);
+
+        if ('string' === typeof selector) {
+            console.log('in imposter', selector, value.toString(), typeof value.toString());
+            await this.page.select(selector, value.toString())
+        } else {
+            if (selector.hasOwnProperty('el')) {
+                await selector.el.select(String(value));
+            }
+        }
+
+        // clicking again to close it
+        await this.click(selector);
     }
 
     // gets attribute or value of element, which can be on the page or iframe
