@@ -630,7 +630,7 @@ export default class ImposterClass {
         */
 
         return {
-            url: Imposter.page.url(),
+            url: this.page.url(),
             sitekey: pk, // websitePublicKey, pk, sitekey
             surl: surl,
         }
