@@ -393,7 +393,7 @@ export default class ImposterClass {
         }
     }
 
-    async elFindClosestParent(selectorChild, selectorParent, childText = null) {
+    async findClosestParentEl(selectorChild, selectorParent, childText = null) {
         childText = this.translate(childText);
         const { el, target, type } = await this.findElementAnywhere(selectorChild, childText);
 
@@ -402,14 +402,14 @@ export default class ImposterClass {
                 console.log('!!!', el.closest(selector));
                 return el.closest(selector);
             }, el, selectorParent),
-            target: target,
+            target: target, 
             type : type,
         }
     }
 
     // el = selector | element{}
     // finds child of the element
-    async elFindChild(elObjOrSelector, selectorChild) {
+    async findChildEl(elObjOrSelector, selectorChild) {
         const { el, target } = ('object' === typeof elObjOrSelector) 
                                     ? elObjOrSelector 
                                     : await this.findElementAnywhere(elObjOrSelector);
