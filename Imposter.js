@@ -421,7 +421,7 @@ export default class ImposterClass {
 
         return {
             el: res,
-            target
+            target: target
         }
     }
 
