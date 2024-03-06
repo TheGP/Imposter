@@ -177,8 +177,31 @@ export default class ImposterClass {
             throw 'NO ELEMENT HAS FOUND';
             return;
         }
+        console.log('!!', type, el, target);
 
-        await this.scrollTo(el, target)
+        let res = await this.isElementInView(el, target);
+        if (!res.isInView) {
+            // Checking if element is inside scrollable div
+            const closestScrollableDiv = await el.evaluateHandle((element) => {
+                while (element) {
+                    // Check if the element is a div and has overflow properties
+                    if (element.tagName.toLowerCase() === 'div' && element.scrollHeight > element.clientHeight) {
+                        console.log('scrollable div found:', element);
+                        return element;
+                    }
+                    element = element.parentElement;
+                }
+                return null;
+            }, el);
+            // Scroll to the closest scrollable div if it exists
+            if (closestScrollableDiv) {
+                await el.scrollIntoView();
+                //await this.scrollTo(el, closestScrollableDiv);
+            } else {
+                console.log('No scrollable div found.');
+            }
+        }
+        await this.scrollTo(el, target);
 
         const isDisabled = await el.asElement().evaluate(element => element.disabled);
         if (isDisabled) {
