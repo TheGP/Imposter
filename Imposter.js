@@ -335,6 +335,65 @@ export default class ImposterClass {
         return (el && el.asElement()) ? true : false;
     }
 
+    async getInnerText(selector, text = null, timeout = 10) {
+        const { el, target } = await this.findElementAnywhere(selector, text, 1);
+        if (el && el.asElement()) {
+            const textContent = await target.evaluate(el => {
+                return el ? el.textContent : null;
+            }, el);
+            return textContent;
+        }
+    }
+
+    async getChildEl(parentEl, selector, text = null) {
+        const { el, target, type } = (parentEl.hasOwnProperty('el')) 
+            ? {
+                target : this.page,
+                type : 'page',
+                ...parentEl 
+            } : {
+                el : parentEl,
+                target : this.page,
+                type : 'page',
+            };
+
+        const res = await this.page.evaluateHandle((parent, selector, text) => {
+            const els = Array.from(parent.querySelectorAll(selector));
+            if (text) {
+                return els.find(el => {
+                    // checking if the element is visible, otherwise user cant click it anyway
+                    const style = getComputedStyle(el);
+                    const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
+                    el.offsetWidth > 0 && el.offsetHeight > 0);
+
+                    return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
+                });
+            } else {
+                return els[0];
+            }
+
+        }, el, selector, text);
+        
+        return (res.asElement()) ? res : null;
+    }
+
+    async waitForDissapear(selector, text = null, timeout = 50, startTime = Date.now()) {
+
+        const { el, target, type } = await this.findElementAnywhere(selector, text, 0.1);
+
+        if (el && el.asElement()) {
+            //console.log('el=', el, el.asElement())
+            // trying again in 1 sec if time out is not yet reached
+            if (Date.now() <= startTime + timeout * 1000) {
+                await this.wait(1);
+                return this.waitForDissapear(selector, text, timeout, startTime);
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
     async findElementAnywhere(selector, text = null, timeout = 10, startTime = Date.now()) {
         selector = this.tryTranslate(selector);
