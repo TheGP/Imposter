@@ -492,19 +492,32 @@ export default class ImposterClass {
 
     // el = selector | element{}
     // finds child of the element
-    async findChildEl(elObjOrSelector, selectorChild) {
+    async findChildEl(elObjOrSelector, selectorChild, textChild = null) {
         const { el, target } = ('object' === typeof elObjOrSelector) 
                                     ? elObjOrSelector 
                                     : await this.findElementAnywhere(elObjOrSelector);
 
-        const res = await target.evaluateHandle((el, selector) => {
-            console.log('!!!', el.querySelector(selector));
-            return el.querySelector(selector);
-        }, el, selectorChild);
+        const res = await target.evaluateHandle((parent, selector, text) => {
+
+            const els = Array.from(parent.querySelectorAll(selector));
+            if (text) {
+                return els.find(el => {
+                    // checking if the element is visible, otherwise user cant click it anyway
+                    const style = getComputedStyle(el);
+                    const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
+                    el.offsetWidth > 0 && el.offsetHeight > 0);
+                    return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
+                });
+            } else {
+                return els[0];
+            }
+
+        }, el, selectorChild, textChild);
 
         return {
             el: res,
-            target: target
+            target: target,
+            type: 'page',
         }
     }
 
