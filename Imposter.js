@@ -94,12 +94,11 @@ export default class ImposterClass {
             if (debug) {
                 console.log('page=', p.url(), 'state=', state);
             }
-            return (state === 'visible'); // && !p.url().startsWith('devtools://')
+            return (state === 'visible' && !p.url().startsWith('devtools://')); //
         });
         const activeTab = visiblePages[0];
         console.log('activeTab', activeTab.url())
         this.page = activeTab;
-
         await this.attachAllToPage();
     }
 
