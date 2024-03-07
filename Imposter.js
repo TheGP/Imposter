@@ -780,7 +780,7 @@ export default class ImposterClass {
 
 
 
-    // Get random number
+    // Get random number (float)
     random(min, max) {
         return Math.random() * (max - min) + min;
     }
@@ -789,13 +789,17 @@ export default class ImposterClass {
         return this.random(min, max);
     }
 
-    // Get random integer number
-    randomInteger(min, max) {
-        return Math.floor(this.rand(min, max));
+    // Get random integer number, if it is not inside except array
+    randomInteger(min, max, except = []) {
+        let randomNumber;
+        do {
+            randomNumber = Math.floor(this.rand(min, max + 1));
+        } while (except.includes(randomNumber));
+        return randomNumber;
     }
     // alias
-    randInt(min, max) {
-        return this.randomInteger(min, max);
+    randInt(min, max, except = []) {
+        return this.randomInteger(min, max, except);
     }
 
     // Wait random times
