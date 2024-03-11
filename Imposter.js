@@ -151,7 +151,7 @@ export default class ImposterClass {
         }, el);
 
         // If focused do not click the element with chance of 30%
-        if (isInputFocused && this.randomChance(30)) {
+        if (isInputFocused && this.chance(30)) {
             await this.clickSimple(el)
         }
         await this.cursor.toggleRandomMove(false)
@@ -804,6 +804,13 @@ export default class ImposterClass {
     }
 
 
+    // Returns true with change of percentage%
+    chance(percentage) {
+        // Generate a random number between 0 and 99 (inclusive)
+        const randomNumber = Math.floor(Math.random() * 100);
+        // If the random number is less than the specified percentage, return true
+        return randomNumber < percentage;
+    }
 
     // Get random number (float)
     random(min, max) {
