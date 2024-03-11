@@ -133,16 +133,16 @@ export default class ImposterClass {
     }
 
     // Navigating + typing
-    async type(selector, string) {
+    async type(selector, string, keepExistingText = false) {
         string = String(string);
 
-        console.log('type to', selector);
+        console.log('type to', selector, string);
         const { el, target, type } = ('object' === typeof selector) ? selector : await this.findElementAnywhere(selector);
         console.log('type=', type);
         /*if ('string' === typeof selector) {
             await this.page.waitForSelector(selector, { timeout: 10_000 })
         }*/
-        console.log('target', target, selector);
+        console.log('target', target, selector, el); // false #register-verification-phone-number
         await this.scrollTo(el, target)
 
         // Checking if the input is already focused
@@ -205,6 +205,7 @@ export default class ImposterClass {
 
         let res = await this.isElementInView(el, target);
         if (!res.isInView) {
+            console.log('element is not in the view!');
             // Checking if element is inside scrollable div
             const closestScrollableDiv = await el.evaluateHandle((element) => {
                 while (element) {
@@ -328,6 +329,7 @@ export default class ImposterClass {
         console.log('select', selector, value);
 
         await this.click(selector);
+        await this.cursor.toggleRandomMove(false);
 
         if ('string' === typeof selector) {
             console.log('in imposter', selector, value.toString(), typeof value.toString());
@@ -340,12 +342,15 @@ export default class ImposterClass {
 
         // clicking again to close it
         await this.click(selector);
+        await this.cursor.toggleRandomMove(true);
     }
 
     // gets attribute or value of element, which can be on the page or iframe
     async getAttribute(selector, attribute_name) {
-        const { el, target } = await this.findElementAnywhere(selector);
-
+        const { el, target } = ('string' == typeof selector)
+                                    ? await this.findElementAnywhere(selector)
+                                    : selector;
+        
         if (el) {
             return this.getAttributeSimple(el, attribute_name, target);
         }
@@ -497,6 +502,9 @@ export default class ImposterClass {
             if (e.toString().includes('Execution context was destroyed')) {
                 console.log('context error, restarting...')
                 return await this.findElementAnywhere(selector, text, timeout); // resetting only startTime
+            } else {
+                console.log('UNKNOWN ERROR', e);
+                return await this.findElementAnywhere(selector, text, timeout, startTime);
             }
         }
     }
@@ -669,7 +677,7 @@ export default class ImposterClass {
         const foundEls = els.filter(el => el !== null);
         const mostVisibleEl = foundEls.reduce((acc, curr) => curr.visible > acc.visible ? curr : acc);
 
-        console.log('el', mostVisibleEl);
+        console.log('mostVisibleEl:', mostVisibleEl);
         return mostVisibleEl.el;
     }
 
@@ -734,8 +742,8 @@ export default class ImposterClass {
         const fcToken = await this.getAttribute('[name="fc-token"]', 'value')  // FunCaptcha-Token
         //console.log('CAPTCHA');
         console.log('fcToken', fcToken);
-        //console.log('pageurl', Imposter.page.url());
-        return;
+        //console.log('pageurl', this.page.url());
+
         const matches = fcToken.match(/pk=([^|]+)\|.*?surl=([^|]+)/);
         if (!matches) {
             return false;
@@ -800,9 +808,6 @@ export default class ImposterClass {
             }
         }
     }
-
-    }
-
 
     // Returns true with change of percentage%
     chance(percentage) {
