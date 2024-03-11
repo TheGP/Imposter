@@ -144,8 +144,17 @@ export default class ImposterClass {
         }*/
         console.log('target', target, selector);
         await this.scrollTo(el, target)
-        //return;
-        await this.clickSimple(el)
+
+        // Checking if the input is already focused
+        const isInputFocused = await target.evaluate((el) => {
+            return document.activeElement === el;
+        }, el);
+
+        // If focused do not click the element with chance of 30%
+        if (isInputFocused && this.randomChance(30)) {
+            await this.clickSimple(el)
+        }
+        await this.cursor.toggleRandomMove(false)
 
         // Removing text from the input if it exists
         if (!keepExistingText) {
@@ -163,7 +172,6 @@ export default class ImposterClass {
             }
         }
 
-        await this.cursor.toggleRandomMove(false)
         await this.typeSimple(el, string)
         await this.cursor.toggleRandomMove(true)
     }
