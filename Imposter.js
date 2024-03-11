@@ -55,7 +55,8 @@ export default class ImposterClass {
                 punctuation: { chance: 70, min: 50, max: 500 },
                 termination: { chance: 95, min: 100, max: 1000 },
                 cadence: { chance: 100, min: 50, max: 500 },
-            }
+            },
+            noticing_focus : 70,
         }
     }
 
@@ -151,7 +152,7 @@ export default class ImposterClass {
         }, el);
 
         // If focused do not click the element with chance of 30%
-        if (isInputFocused && this.chance(30)) {
+        if (isInputFocused && this.chance(this.behavior.noticing_focus)) {
             await this.clickSimple(el)
         }
         await this.cursor.toggleRandomMove(false)
