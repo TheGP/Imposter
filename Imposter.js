@@ -146,6 +146,23 @@ export default class ImposterClass {
         await this.scrollTo(el, target)
         //return;
         await this.clickSimple(el)
+
+        // Removing text from the input if it exists
+        if (!keepExistingText) {
+            const value = await this.getAttribute({el : el, target: target}, `value`);
+            if ('' !== value) {
+                await this.waitRandom(0.5, 0.9);
+                await this.page.keyboard.down('ControlLeft');
+                await this.waitRandom(0.1, 0.3);
+                await this.page.keyboard.press('KeyA');
+                await this.waitRandom(1, 2);
+                await this.page.keyboard.press('Backspace');
+                await this.waitRandom(0.2, 0.5);
+                await this.page.keyboard.up('ControlLeft');
+                await this.waitRandom(0.7, 1.2);
+            }
+        }
+
         await this.cursor.toggleRandomMove(false)
         await this.typeSimple(el, string)
         await this.cursor.toggleRandomMove(true)
