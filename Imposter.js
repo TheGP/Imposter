@@ -179,8 +179,12 @@ export default class ImposterClass {
 
     // Navigating + Clicking on an element, text inside of the element is optional, supports inner html <button><span>Submit
     // ::TODO:: different text match options?
+    // ::TODO:: scroll properly divs without scrollIntoView
+    // ::TODO:: stop random mouse movements right after the click option (for clicking on select etc)
     async click(selectorOrObj, text = null, timeout = 10) {
+        console.log('click');
         text = this.translate(text);
+
         await this.waitRandom(1, 3);
         //await this.waitForNetworkIdle(1);
         //console.log('wait for', selectorOrObj)
@@ -199,6 +203,7 @@ export default class ImposterClass {
                                             };
 
         if (!el) {
+            console.log('error', selectorOrObj, text);
             throw 'NO ELEMENT HAS FOUND';
             return;
         }
@@ -567,13 +572,15 @@ export default class ImposterClass {
             where = this.page;
         }
 
-        const el = ('string' === typeof selector) ? await page.$(selector) : selector;
+        console.log('typeof selector=', typeof selector)
+        const el = ('string' === typeof selector) ? await this.page.$(selector) : selector;
         if (el) {
             if ('value' !== attribute_name) {
                 return await where.evaluate((element, attribute_name) => element.getAttribute(attribute_name), el, attribute_name)
             } else {
                 // checking if it is checkbox
                 const type = await where.evaluate((element) => element.type || null, el);
+                console.log('input type=', type);
                 if ('checkbox' === type) {
                     return await where.evaluate((element) => element.checked, el);
                 } else {
