@@ -124,10 +124,6 @@ Launches a new browser instance with the provided options.
 
 Finds the active tab and prepares it for work.
 
-### `attachAllToPage(): Promise<void>`
-
-Attaches all necessary helpers to the active page.
-
 ### `setBehaviorFingerprint(behavior: Object): Promise<void>`
 
 Sets behavior fingerprint for simulating human-like behaviors.
@@ -179,3 +175,111 @@ Checks if the specified element is present on the page.
 ### `find(selector: string, text: string|null = null, timeout: number = 10): Promise<Object|null>`
 
 Finds the specified element anywhere on the page or within frames.
+
+### `getFrame(startWith = '', debug = false): Promise<Object|null>`
+
+Get the frame that starts with a specified URL.
+
+### `isElementInView(selector, target = this.page): Promise<Object>`
+
+Checks if an element is in view and gives directions where to scroll.
+
+### `findFirstElementOnScreen(selector): Promise<Object>`
+
+Finds the first element that is currently on the screen and most visible.
+
+### `shakeMouse(): Promise<void>`
+
+Shakes the mouse a bit to emulate human-like movement.
+
+### `jitterMouse(options): Promise<void>`
+
+Shakes the mouse with jitter.
+
+### `isThereCaptcha(): Promise<string|boolean>`
+
+Checks if there is a captcha on the page and returns its name.
+
+### `getParamsArkoseCaptcha(): Promise<Object>`
+
+Gets parameters for Arkose captcha.
+
+### `waitTillHTMLRendered(timeout = 15): Promise<void>`
+
+Waits for the HTML to be fully rendered.
+
+### `chance(percentage): boolean`
+
+Returns true with a given percentage chance.
+
+### `random(min, max): number`
+
+Gets a random number between the specified range.
+
+### `rand(min, max): number`
+
+Alias for `random(min, max)`.
+
+### `randomInteger(min, max, except = []): number`
+
+Gets a random integer number within the specified range, excluding certain values.
+
+### `randInt(min, max, except = []): number`
+
+Alias for `randomInteger(min, max, except)`.
+
+### `waitRandom(min, max): Promise<void>`
+
+Waits for a random time within the specified range.
+
+### `wait(s): Promise<void>`
+
+Waits for the specified number of seconds.
+
+### `translate(string): string`
+
+Translates a string based on a dictionary.
+
+### `tryTranslate(string): string`
+
+Translates text even if it is inside another string.
+
+### `setDictionary(dictionary): void`
+
+Sets the translation dictionary.
+
+### `filter(arr, callback): Promise<Array>`
+
+Filters an array asynchronously based on a provided callback function.
+
+### `drawBezierMovement(page, startX, startY, endX, endY, options): Promise<void>`
+
+Draws a bezier movement between two points on the page.
+
+### `randomPause(page, min, max): Promise<void>`
+
+Pauses for a random time between two specified values.
+
+### `computeBezier(t, p0, p1, p2, p3): number`
+
+Computes a bezier value at a given time.
+
+### `easeInOutCubic(t): number`
+
+Eases the transition in and out using a cubic function.
+
+### `calculateDistance(start, end): number`
+
+Calculates the distance between two points.
+
+### `computeMovementCalculations(start, end): Object`
+
+Computes movement calculations between two points.
+
+### `calculateSpeed(distance): number`
+
+Calculates the speed based on the distance.
+
+### `calculateAcceleration(distance): number`
+
+Calculates the acceleration based on the distance.
