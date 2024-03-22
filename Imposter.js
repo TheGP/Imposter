@@ -248,6 +248,11 @@ export default class ImposterClass {
             await this.waitTillHTMLRendered();
     }
 
+    // Clicks on random element
+    async clickRandom(selector) {
+        return await this.click(await this.chooseRandom(selector));
+    }
+
     // Clicking on an element
     async clickSimple(selector) {
         await this.cursor.click(selector, {
@@ -611,6 +616,25 @@ export default class ImposterClass {
         });
         return frame;
     }
+
+    // returns random element if there are multiple by the selector, designed to be used in conjuction with .click()
+    async chooseRandom(selector = '', returnRandom) {
+        const el = await this.page.evaluateHandle((selector) => {
+            const elements = document.querySelectorAll(selector);
+
+            // Get a random index within the array length
+            const randomIndex = Math.floor(Math.random() * elements.length);
+
+            return elements[randomIndex];
+        }, selector);
+
+        return {
+            el : el,
+            target : this.page,
+            type: 'page',
+        };
+    }
+
 
     // Checks if element if in the view and gives directions where to scroll
     // ::TODO:: support of horizonal
