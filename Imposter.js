@@ -317,8 +317,7 @@ export default class ImposterClass {
         } while (!(await isScrolledToBottom()) && Date.now() < finishTime);
     }
 
-    // close page with mouse going to the close button
-    async close(ms) {
+    async closeTab(attach = true) {
         // choosing random point on the length to emulate moving cursor to close tab
         const randomXExitPoint = Math.floor(Math.random() * (this.pageSize.width - 50 + 1)) + 50
         await this.cursor.moveTo({x: randomXExitPoint, y: 0})
@@ -328,6 +327,15 @@ export default class ImposterClass {
         await this.waitRandom(1, 2.5)
         // Safely closing the tab
         await this.page.close()
+
+        if (attach) {
+            await this.attachToActiveTab();
+        }
+    }
+
+    // close page with mouse going to the close button
+    async close(ms) {
+        await closeTab(false);
         await this.browser.close()
     }
 
