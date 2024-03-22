@@ -251,35 +251,3 @@ Sets the translation dictionary.
 ### `filter(arr, callback): Promise<Array>`
 
 Filters an array asynchronously based on a provided callback function.
-
-### `drawBezierMovement(page, startX, startY, endX, endY, options): Promise<void>`
-
-Draws a bezier movement between two points on the page.
-
-### `randomPause(page, min, max): Promise<void>`
-
-Pauses for a random time between two specified values.
-
-### `computeBezier(t, p0, p1, p2, p3): number`
-
-Computes a bezier value at a given time.
-
-### `easeInOutCubic(t): number`
-
-Eases the transition in and out using a cubic function.
-
-### `calculateDistance(start, end): number`
-
-Calculates the distance between two points.
-
-### `computeMovementCalculations(start, end): Object`
-
-Computes movement calculations between two points.
-
-### `calculateSpeed(distance): number`
-
-Calculates the speed based on the distance.
-
-### `calculateAcceleration(distance): number`
-
-Calculates the acceleration based on the distance.
