@@ -742,6 +742,19 @@ export default class ImposterClass {
     }
 
 
+    // Checks if there is a captcha on the page and returns its name
+    async isThereCaptcha() {
+        if (await this.getAttribute('[name="fc-token"]', 'value')) {
+            return 'arkose';
+        }
+        if (await this.getAttribute('#recaptcha-token', 'value')) {
+            return 'recaptcha';
+        }
+        
+        return false;
+    }
+
+
     async getParamsArkoseCaptcha() {
 
         // https://client-api.arkoselabs.com [name="fc-token"]
@@ -770,6 +783,7 @@ export default class ImposterClass {
             url: this.page.url(),
             sitekey: pk, // websitePublicKey, pk, sitekey
             surl: surl,
+            userAgent: await this.page.evaluate(() => navigator.userAgent),
         }
     }
 
