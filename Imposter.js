@@ -133,7 +133,7 @@ export default class ImposterClass {
         this.attachAllToPage();
     }
 
-    // Navigating + typing
+    // Navigating + typing (backspace = ⌫)
     async type(selector, string, keepExistingText = false) {
         string = String(string);
 
@@ -152,7 +152,7 @@ export default class ImposterClass {
         }, el);
 
         // If focused do not click the element with chance of 30%
-        if (isInputFocused && this.chance(this.behavior.noticing_focus)) {
+        if (!isInputFocused || (isInputFocused && this.chance(this.behavior.noticing_focus))) {
             await this.clickSimple(el)
         }
         await this.cursor.toggleRandomMove(false)
