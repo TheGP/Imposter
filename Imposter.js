@@ -894,7 +894,8 @@ export default class ImposterClass {
         console.log('tryTranslate', string);
         for (const key in this.dictionary) {
             //console.log('key=', key);
-            string = string.replace(key, this.dictionary[key]);
+            // replacing only if the string doesnt have nearby text, for example if replacing test: testtest wont be, but test"test will be
+            string = string.replace(new RegExp("\\b" + key + "\\b", "g"), this.dictionary[key]);
             //console.log('after replacement=', string);
         }
         return string;
