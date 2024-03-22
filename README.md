@@ -247,7 +247,3 @@ Translates text even if it is inside another string.
 ### `setDictionary(dictionary): void`
 
 Sets the translation dictionary.
-
-### `filter(arr, callback): Promise<Array>`
-
-Filters an array asynchronously based on a provided callback function.
