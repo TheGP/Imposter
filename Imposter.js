@@ -676,7 +676,7 @@ export default class ImposterClass {
         const isInView = (
             boundingBox.x >= 0 &&
             boundingBox.y >= 0 &&
-            boundingBox.y + boundingBox.height <= viewportHeight
+            boundingBox.y + boundingBox.height <= viewportHeight || ((boundingBox.y + boundingBox.height - viewportHeight) <= 0.2 * viewportHeight) // if its 80% in the view or more, lets count its in the view (linked in "next" button at the end of sign up fails because cant scroll it)
         );
 
         console.log('boundingBox.y', boundingBox.y, 'page height:', viewportHeight);
