@@ -330,13 +330,14 @@ export default class ImposterClass {
     }
 
     async closeTab(attach = true) {
+        // No random moves as it exited
+        await this.cursor.toggleRandomMove(false)
         // choosing random point on the length to emulate moving cursor to close tab
         const randomXExitPoint = Math.floor(Math.random() * (this.pageSize.width - 50 + 1)) + 50
         await this.cursor.moveTo({x: randomXExitPoint, y: 0})
-        // No random moves as it exited
-        await this.cursor.toggleRandomMove(false)
         // Waiting to emulate moving to closse button and clicking it
         await this.waitRandom(1, 2.5)
+        delete this.cursor;
         // Safely closing the tab
         await this.page.close()
 
