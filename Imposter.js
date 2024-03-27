@@ -121,9 +121,16 @@ export default class ImposterClass {
     // Open url
     async goto(url) {
         if (!this.page) {
+            console.info('opening new page');
             await this.newPage();
         }
-        await this.page.goto(url)
+        
+        try {
+            await this.page.goto(url)
+        } catch (error) {
+            console.error('network error?');
+            console.error(error);
+        }
         await this.waitRandom(0.7, 2.1)
     }
 
@@ -182,7 +189,7 @@ export default class ImposterClass {
     // ::TODO:: scroll properly divs without scrollIntoView
     // ::TODO:: stop random mouse movements right after the click option (for clicking on select etc)
     async click(selectorOrObj, text = null, timeout = 10) {
-        console.log('click');
+        console.log('click', selectorOrObj);
         text = this.translate(text);
 
         await this.waitRandom(1, 3);
