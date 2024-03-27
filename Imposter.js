@@ -93,12 +93,12 @@ export default class ImposterClass {
         const visiblePages = await filter(pages, async (p) => {
             const state = await p.evaluate(() => document.visibilityState);
             if (debug) {
-                console.log('page=', p.url(), 'state=', state);
+                console.info('page=', p.url(), 'state=', state);
             }
             return (state === 'visible' && !p.url().startsWith('devtools://')); //
         });
         const activeTab = visiblePages[0];
-        console.log('activeTab', activeTab.url())
+        console.info('activeTab', activeTab.url())
         this.page = activeTab;
         await this.attachAllToPage();
     }
@@ -139,11 +139,11 @@ export default class ImposterClass {
 
         console.log('type to', selector, string);
         const { el, target, type } = ('object' === typeof selector) ? selector : await this.findElementAnywhere(selector);
-        console.log('type=', type);
+        console.info('type=', type);
         /*if ('string' === typeof selector) {
             await this.page.waitForSelector(selector, { timeout: 10_000 })
         }*/
-        console.log('target', target, selector, el); // false #register-verification-phone-number
+        console.info('target', target, selector, el); // false #register-verification-phone-number
         await this.scrollTo(el, target)
 
         // Checking if the input is already focused
@@ -203,15 +203,15 @@ export default class ImposterClass {
                                             };
 
         if (!el) {
-            console.log('error', selectorOrObj, text);
+            console.error('error', selectorOrObj, text);
             throw 'NO ELEMENT HAS FOUND';
             return;
         }
-        console.log('!!', type, el, target);
+        console.info('element found:', type, el, target);
 
         let res = await this.isElementInView(el, target);
         if (!res.isInView) {
-            console.log('element is not in the view!');
+            console.info('element is not in the view!');
             // Checking if element is inside scrollable div
             const closestScrollableDiv = await el.evaluateHandle((element) => {
                 while (element) {
@@ -229,14 +229,14 @@ export default class ImposterClass {
                 await el.scrollIntoView();
                 //await this.scrollTo(el, closestScrollableDiv);
             } else {
-                console.log('No scrollable div found.');
+                console.warn('No scrollable div found.');
             }
         }
         await this.scrollTo(el, target);
 
         const isDisabled = await el.asElement().evaluate(element => element.disabled);
         if (isDisabled) {
-            console.log('waiting for el to become enabled');
+            console.info('waiting for el to become enabled');
             await this.wait(0.3);
             return await this.click(selectorOrObj, text, timeout);
         }
@@ -281,11 +281,11 @@ export default class ImposterClass {
         let res = await this.isElementInView(selector, target);
 
         if (res.isInView) {
-            console.log('element is in the view')
+            console.info('element is in the view')
         }
         
         while (!res.isInView) {
-            console.log('scrolling to el', res.direction);
+            console.info('scrolling to el', res.direction);
             await this.waitRandom(0.1, 1.5);
             const scroller = await humanScroll(target);
             await scroller.scroll(1, res.direction);
@@ -351,7 +351,7 @@ export default class ImposterClass {
         await this.cursor.toggleRandomMove(false);
 
         if ('string' === typeof selector) {
-            console.log('in imposter', selector, value.toString(), typeof value.toString());
+            console.info('in imposter', selector, value.toString(), typeof value.toString());
             await this.page.select(selector, value.toString())
         } else {
             if (selector.hasOwnProperty('el')) {
@@ -446,7 +446,7 @@ export default class ImposterClass {
     async findElementAnywhere(selector, text = null, timeout = 10, startTime = Date.now()) {
         selector = this.tryTranslate(selector);
         text = this.translate(text);
-        console.log(`findElementAnywhere`, selector);
+        console.info(`findElementAnywhere`, selector, text);
 
         try {
         const el = await this.page.evaluateHandle((selector, text) => {
@@ -519,10 +519,10 @@ export default class ImposterClass {
         };
         } catch (e) {
             if (e.toString().includes('Execution context was destroyed')) {
-                console.log('context error, restarting...')
+                console.error('context error, restarting...')
                 return await this.findElementAnywhere(selector, text, timeout); // resetting only startTime
             } else {
-                console.log('UNKNOWN ERROR', e);
+                console.error('UNKNOWN ERROR', e);
                 return await this.findElementAnywhere(selector, text, timeout, startTime);
             }
         }
@@ -534,7 +534,7 @@ export default class ImposterClass {
 
         return {
             el : await target.evaluateHandle((el, selector) => {
-                console.log('!!!', el.closest(selector));
+                //console.info('!!!', el.closest(selector));
                 return el.closest(selector);
             }, el, selectorParent),
             target: target, 
@@ -585,7 +585,7 @@ export default class ImposterClass {
             where = this.page;
         }
 
-        console.log('typeof selector=', typeof selector)
+        console.info('typeof selector=', typeof selector)
         const el = ('string' === typeof selector) ? await this.page.$(selector) : selector;
         if (el) {
             if ('value' !== attribute_name) {
@@ -593,7 +593,7 @@ export default class ImposterClass {
             } else {
                 // checking if it is checkbox
                 const type = await where.evaluate((element) => element.type || null, el);
-                console.log('input type=', type);
+                console.info('input type=', type);
                 if ('checkbox' === type) {
                     return await where.evaluate((element) => element.checked, el);
                 } else {
@@ -610,7 +610,7 @@ export default class ImposterClass {
         this.page.waitForNavigation({waitUntil: 'networkidle2'})
         const frame = this.page.frames().find(f => {
             if (debug) {
-                console.log(f.url());
+                console.info(f.url());
             }
             return f.url().startsWith(startWith)
         });
@@ -639,7 +639,7 @@ export default class ImposterClass {
     // Checks if element if in the view and gives directions where to scroll
     // ::TODO:: support of horizonal
     async isElementInView(selector, target = this.page) {
-        console.log('isElementInView', selector);
+        console.info('isElementInView', selector);
         const elementHandle = ('string' === typeof selector)
                                     ? await target.$(selector)
                                     : selector;
@@ -651,7 +651,7 @@ export default class ImposterClass {
 
         // ::TRICKY:: do not use puppeteer's function as it calculates y for a whole page, not iframe only
         const boundingBox = await target.evaluate(element => {
-            console.log(element,  element.getBoundingClientRect());
+            console.info(element,  element.getBoundingClientRect());
             return JSON.parse(JSON.stringify(element.getBoundingClientRect()))
         }, elementHandle);
       
@@ -701,11 +701,11 @@ export default class ImposterClass {
                         (boundingBox.top >= 0 && boundingBox.top <= window.innerHeight) ||
                         (boundingBox.bottom >= 0 && boundingBox.bottom <= window.innerHeight)
                     );
-                    console.log('b height', boundingBox.height, 'b top', boundingBox.top, 'b bottom', boundingBox.bottom, 'pageYOffset', window.scrollY, 'innerHeight', window.innerHeight)
+                    console.info('b height', boundingBox.height, 'b top', boundingBox.top, 'b bottom', boundingBox.bottom, 'pageYOffset', window.scrollY, 'innerHeight', window.innerHeight)
                     // calculating visile percentage of element:
                     const invisibleTop = (boundingBox.top >= 0) ? 0 : boundingBox.top;
                     const invisibleBottom = (boundingBox.bottom < window.innerHeight) ? 0 : window.innerHeight - boundingBox.bottom;
-                    console.log('invisibleTop', invisibleTop, 'invisibleBottom', invisibleBottom)
+                    console.info('invisibleTop', invisibleTop, 'invisibleBottom', invisibleBottom)
                     const heightVisible = boundingBox.height + invisibleTop + invisibleBottom; // it will be subtracted because its negative
     
                     return Math.floor(heightVisible / (boundingBox.height / 100));
@@ -717,7 +717,7 @@ export default class ImposterClass {
         const foundEls = els.filter(el => el !== null);
         const mostVisibleEl = foundEls.reduce((acc, curr) => curr.visible > acc.visible ? curr : acc);
 
-        console.log('mostVisibleEl:', mostVisibleEl);
+        console.info('mostVisibleEl:', mostVisibleEl);
         return mostVisibleEl.el;
     }
 
@@ -794,7 +794,7 @@ export default class ImposterClass {
         // waiting user to solve catcha before clicking the buttons
         const fcToken = await this.getAttribute('[name="fc-token"]', 'value')  // FunCaptcha-Token
         //console.log('CAPTCHA');
-        console.log('fcToken', fcToken);
+        console.info('fcToken', fcToken);
         //console.log('pageurl', this.page.url());
 
         const matches = fcToken.match(/pk=([^|]+)\|.*?surl=([^|]+)/);
@@ -848,7 +848,7 @@ export default class ImposterClass {
                 }
 
                 if(countStableSizeIterations >= minStableSizeIterations) {
-                    console.log("Page rendered fully..");
+                    console.info("Page rendered fully..");
                     break;
                 }
 
@@ -857,7 +857,7 @@ export default class ImposterClass {
             }
         } catch (e) {
             if (e.toString().includes('Execution context was destroyed')) {
-                console.log('context error, restarting...')
+                console.warn('context error, restarting...')
                 return await this.waitTillHTMLRendered(timeout);
             }
         }
@@ -896,7 +896,7 @@ export default class ImposterClass {
     // Wait random times
     async waitRandom(min, max) {
         const randomDelay = this.random(min, max);
-        console.log('randomDelay', randomDelay);
+        console.info('waitRandom', randomDelay);
         await this.wait(randomDelay);
     }
 
@@ -915,7 +915,7 @@ export default class ImposterClass {
     tryTranslate(string) {
         if ('string' !== typeof string) return string;
 
-        console.log('tryTranslate', string);
+        console.info('tryTranslate', string);
         for (const key in this.dictionary) {
             //console.log('key=', key);
             // replacing only if the string doesnt have nearby text, for example if replacing test: testtest wont be, but test"test will be
