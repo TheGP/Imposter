@@ -252,7 +252,8 @@ export default class ImposterClass {
             hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
             waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
         })
-            await this.waitTillHTMLRendered();
+        
+        await this.waitTillHTMLRendered();
     }
 
     // Clicks on random element
@@ -285,7 +286,7 @@ export default class ImposterClass {
     // Scrolls to the element
     // ::TODO:: support of horizonal scroll
     async scrollTo(selector, target) {
-        let res = await this.isElementInView(selector, target);
+        let res = await this.isElementInView(selector, target); // {isInView: false, direction: 'down'}; 
 
         if (res.isInView) {
             console.info('element is in the view')
@@ -323,7 +324,7 @@ export default class ImposterClass {
 
         // ::TRICKY:: normal 'while' is not paused by await
         do {
-            console.log('reading');
+            console.info('reading');
             await this.waitRandom(3, 10);
             await this.scroller.scroll(1, 'down');
         } while (!(await isScrolledToBottom()) && Date.now() < finishTime);
