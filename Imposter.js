@@ -830,16 +830,15 @@ export default class ImposterClass {
 
     // Waiting for the page to be rendered
     // https://stackoverflow.com/questions/52497252/puppeteer-wait-until-page-is-completely-loaded
-    async waitTillHTMLRendered(timeout = 15) {
-        console.log('waitTillHTMLRendered');
+    async waitTillHTMLRendered(minStableSizeIterations = 3, timeout = 15) {
+        //console.log('waitTillHTMLRendered');
 
         try {
-            const checkDurationMsecs = 1;
+            const checkDurationMsecs = 0.7;
             const maxChecks = timeout / checkDurationMsecs;
             let lastHTMLSize = 0;
             let checkCounts = 1;
             let countStableSizeIterations = 0;
-            const minStableSizeIterations = 3;
         
             while (checkCounts++ <= maxChecks) {
                 let html = await this.page.content();
@@ -847,7 +846,7 @@ export default class ImposterClass {
 
                 let bodyHTMLSize = await this.page.evaluate(() => document.body.innerHTML.length);
 
-                console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
+                //console.info('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
 
                 // if change is small - do not take it into account
                 if (lastHTMLSize != 0 && (currentHTMLSize == lastHTMLSize || 30 >= Math.abs(currentHTMLSize - lastHTMLSize))) {
