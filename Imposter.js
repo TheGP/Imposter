@@ -58,7 +58,9 @@ export default class ImposterClass {
             },
             noticing_focus : 70,
         }
-    }
+    };
+    actionsHistory = [];
+    actionsHistoryRecording = true;
 
     constructor() {
         this.puppeteer = puppeteer;
@@ -120,6 +122,8 @@ export default class ImposterClass {
 
     // Open url
     async goto(url) {
+        this.recordAction('goto', [ url ]);
+
         if (!this.page) {
             console.info('opening new page');
             await this.newPage();
@@ -142,11 +146,16 @@ export default class ImposterClass {
 
     // Navigating + typing (backspace = ⌫)
     async type(selector, string, keepExistingText = false) {
+        this.recordAction('type', [ selector, string, keepExistingText ]);
         string = String(string);
 
         console.log('type to', selector, string);
         const { el, target, type } = ('object' === typeof selector) ? selector : await this.findElementAnywhere(selector);
         console.info('type=', type);
+        if (!el) {
+            return await this.replayPreviousAction(['NO ELEMENT HAS FOUND', selector]);
+        }
+
         /*if ('string' === typeof selector) {
             await this.page.waitForSelector(selector, { timeout: 10_000 })
         }*/
@@ -189,7 +198,8 @@ export default class ImposterClass {
     // ::TODO:: scroll properly divs without scrollIntoView
     // ::TODO:: stop random mouse movements right after the click option (for clicking on select etc)
     async click(selectorOrObj, text = null, timeout = 10) {
-        console.log('click', selectorOrObj);
+        console.log('click', selectorOrObj, text);
+        this.recordAction('click', [ selectorOrObj, text, timeout ]);
         text = this.translate(text);
 
         await this.waitRandom(1, 3);
@@ -210,8 +220,9 @@ export default class ImposterClass {
                                             };
 
         if (!el) {
-            console.error('error', selectorOrObj, text);
-            throw 'NO ELEMENT HAS FOUND';
+            if (!el) {
+                return await this.replayPreviousAction(['NO ELEMENT HAS FOUND', selectorOrObj, text]);
+            }
             return;
         }
         console.info('element found:', type, el, target);
@@ -872,6 +883,40 @@ export default class ImposterClass {
             }
         }
     }
+
+
+    // Records actions for replayPreviousAction
+    recordAction(func, params) {
+        if (this.actionsHistoryRecording) {
+            this.actionsHistory.push({ func: func, params: params });
+        }
+    }
+
+
+    // Replays previous action and then current action on the current action fail (in case it was misclick or something on the previous action)
+    async replayPreviousAction(error = null) {
+        if (!this.actionsHistoryRecording) {
+            console.error('replayPreviousAction still gave an error: ', error);
+            throw JSON.stringify(error);
+        }
+
+        if (2 <= this.actionsHistory.length) {
+            console.log('Repeating previous action...');
+            this.actionsHistoryRecording = false;
+            // repeating previous action
+            let action =  this.actionsHistory[this.actionsHistory.length - 2];
+            await this[action.func].apply(this, action.params);
+
+            // repeating current action
+            action =  this.actionsHistory[this.actionsHistory.length - 1];
+            await this[action.func].apply(this, action.params);
+            this.actionsHistoryRecording = true;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
     // Returns true with change of percentage%
     chance(percentage) {
