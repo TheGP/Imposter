@@ -376,7 +376,7 @@ export default class ImposterClass {
 
     // close page with mouse going to the close button
     async close(ms) {
-        await closeTab(false);
+        await this.closeTab(false);
         await this.browser.close()
     }
 
