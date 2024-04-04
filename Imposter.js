@@ -162,6 +162,7 @@ export default class ImposterClass {
 
     // Navigating + typing (backspace = ⌫)
     async type(selector, string, keepExistingText = false) {
+        if ('object' === typeof selector && selector instanceof Promise) selector = await selector;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
         this.recordAction('type', [ selector, string, keepExistingText ]);
         string = String(string);
 
@@ -215,6 +216,7 @@ export default class ImposterClass {
     // ::TODO:: stop random mouse movements right after the click option (for clicking on select etc)
     async click(selectorOrObj, text = null, timeout = 10) {
         console.log('click', selectorOrObj, text);
+        if ('object' === typeof selectorOrObj && selectorOrObj instanceof Promise) selectorOrObj = await selectorOrObj;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
         this.recordAction('click', [ selectorOrObj, text, timeout ]);
         text = this.translate(text);
 
