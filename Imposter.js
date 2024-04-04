@@ -67,11 +67,19 @@ export default class ImposterClass {
     }
 
     // Connect to the browser
+    // Supports webSocketLink or object like  { browserURL: `http://127.0.0.1:9222` }
     async connect(webSocketLink) {
-        this.browser = await puppeteer.connect({
-            browserWSEndpoint: webSocketLink,
-            defaultViewport: null,
-        });
+
+        const params = ('object' === typeof webSocketLink) ? {
+                protocolTimeout: 1800000, // 30 min timeout
+                ...webSocketLink
+            } : {
+                browserWSEndpoint: webSocketLink,
+                protocolTimeout: 1800000, // 30 min timeout
+                defaultViewport: null,
+            };
+
+        this.browser = await puppeteer.connect(params);
     }
 
     // Launch the browser
@@ -84,6 +92,7 @@ export default class ImposterClass {
 
         this.browser = await puppeteer.launch({
             headless: false,
+            protocolTimeout: 1800000, // 30 min timeout
             ...options,
         });
     }
