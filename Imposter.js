@@ -614,9 +614,10 @@ export default class ImposterClass {
     }
 
     // Finds element near by
-    async findElNearBy(selectorChild, childText, selectorParent, selectorChild2) {
+    async findElNearBy(selectorChild, childText, selectorParent, selectorChild2, childText2) {
+        this.recordAction('findElNearBy', [ selectorChild, childText, selectorParent, selectorChild2, childText2 ]);
         const parentEl = await this.findClosestParentEl(selectorChild, selectorParent, childText);
-        return await this.findChildEl(parentEl, selectorChild2);
+        return await this.findChildEl(parentEl, selectorChild2, childText2);
     }
 
     // where = page or frame
