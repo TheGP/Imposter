@@ -416,10 +416,10 @@ export default class ImposterClass {
     }
 
     // is there the element anywhere on the page / frame?
-    async isThere(selector, text = null, timeout = 10) {
+    async isThere(selector, text = null, timeout = 1) {
         await this.waitTillHTMLRendered(2);
 
-        const { el, target } = await this.findElementAnywhere(selector, text, 1);
+        const { el, target } = await this.findElementAnywhere(selector, text, timeout);
         return (el && el.asElement()) ? true : false;
     }
 
