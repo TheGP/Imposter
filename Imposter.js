@@ -898,7 +898,7 @@ export default class ImposterClass {
         } catch (e) {
             if (e.toString().includes('Execution context was destroyed')) {
                 console.warn('context error, restarting...')
-                return await this.waitTillHTMLRendered(timeout);
+                return this.waitTillHTMLRendered(minStableSizeIterations, timeout);
             }
         }
     }
