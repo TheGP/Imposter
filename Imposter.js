@@ -920,11 +920,15 @@ export default class ImposterClass {
         }
 
         if (2 <= this.actionsHistory.length) {
-            console.log('Repeating previous action...');
+            console.warn('Repeating previous action...');
             this.actionsHistoryRecording = false;
             // repeating previous action
             let action =  this.actionsHistory[this.actionsHistory.length - 2];
-            await this[action.func].apply(this, action.params);
+            try {
+                await this[action.func].apply(this, action.params);
+            } catch (e) {
+                console.warn('Replay failed:', e);
+            }
 
             // repeating current action
             action =  this.actionsHistory[this.actionsHistory.length - 1];
