@@ -161,9 +161,13 @@ export default class ImposterClass {
     }
 
     // Navigating + typing (backspace = ⌫)
+    // ::TODO:: check why it skips some spaces in big block of text on linkedin
+    // ::TODO:: click after text? (need to make it work together with removing current value)
+    // ::TODO:: do not type if its already typed
     async type(selector, string, keepExistingText = false) {
         if ('object' === typeof selector && selector instanceof Promise) selector = await selector;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
         this.recordAction('type', [ selector, string, keepExistingText ]);
+        await this.waitRandom(0.6, 2);
         string = String(string);
 
         console.log('type to', selector, string);
@@ -193,6 +197,7 @@ export default class ImposterClass {
         // Removing text from the input if it exists
         if (!keepExistingText) {
             const value = await this.getAttribute({el : el, target: target}, `value`);
+            console.info('current input value=', value);
             if ('' !== value) {
                 await this.waitRandom(0.5, 0.9);
                 await this.page.keyboard.down('ControlLeft');
@@ -220,7 +225,7 @@ export default class ImposterClass {
         this.recordAction('click', [ selectorOrObj, text, timeout ]);
         text = this.translate(text);
 
-        await this.waitRandom(1, 3);
+        await this.waitRandom(0.2, 1.2);
         //await this.waitForNetworkIdle(1);
         //console.log('wait for', selectorOrObj)
         //if ('string' == typeof selectorOrObj) await this.page.waitForSelector(selectorOrObj, { timeout: timeout });
@@ -243,7 +248,7 @@ export default class ImposterClass {
             }
             return;
         }
-        console.info('element found:', type, el, target);
+        console.info('element found:', type, el, JSON.stringify(target));
 
         let res = await this.isElementInView(el, target);
         if (!res.isInView) {
@@ -385,8 +390,8 @@ export default class ImposterClass {
     async select(selector, value) {
         console.log('select', selector, value);
 
-        await this.click(selector);
         await this.cursor.toggleRandomMove(false);
+        await this.click(selector);
 
         if ('string' === typeof selector) {
             console.info('in imposter', selector, value.toString(), typeof value.toString());
@@ -492,13 +497,13 @@ export default class ImposterClass {
         const el = await this.page.evaluateHandle((selector, text) => {
             const els = Array.from(document.querySelectorAll(selector));
             if (text) {
-                return els.find(el => {
+                const res = els.find(el => {
                     // checking if the element is visible, otherwise user cant click it anyway
                     const style = getComputedStyle(el);
                     const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
                     el.offsetWidth > 0 && el.offsetHeight > 0);
 
-                    /*
+                    
                     console.log(
                         el.textContent.trim().toLowerCase(), 
                         'searching for=', 
@@ -506,9 +511,11 @@ export default class ImposterClass {
                         el.textContent.trim().toLowerCase().includes(text.toLowerCase()),
                         isVisible
                     );
-                    */
+                
                     return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
                 });
+                console.log('RES=', res);
+                return res;
             } else {
                 return els[0];
             }
@@ -523,7 +530,9 @@ export default class ImposterClass {
         } else {
             // searching in frames
             const frames = this.page.frames();
+            //console.log('frames', frames);
             for (const frame of frames) {
+                //console.info(`searching in frame = ` + await frame.url())
                 const el = await frame.evaluateHandle((selector, text) => {
                     const els = Array.from(document.querySelectorAll(selector));
                     if (text) {
@@ -563,6 +572,7 @@ export default class ImposterClass {
                 return await this.findElementAnywhere(selector, text, timeout); // resetting only startTime
             } else {
                 console.error('UNKNOWN ERROR', e);
+                await i.wait(0.1);
                 return await this.findElementAnywhere(selector, text, timeout, startTime);
             }
         }
@@ -593,13 +603,15 @@ export default class ImposterClass {
 
             const els = Array.from(parent.querySelectorAll(selector));
             if (text) {
-                return els.find(el => {
+                const res = els.find(el => {
                     // checking if the element is visible, otherwise user cant click it anyway
                     const style = getComputedStyle(el);
                     const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
                     el.offsetWidth > 0 && el.offsetHeight > 0);
                     return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
                 });
+                console.log('findChildEl', res);
+                return res;
             } else {
                 return els[0];
             }
@@ -692,6 +704,7 @@ export default class ImposterClass {
 
         // ::TRICKY:: do not use puppeteer's function as it calculates y for a whole page, not iframe only
         const boundingBox = await target.evaluate(element => {
+            console.info(`Getting getBoundingClientRect of:`, element);
             console.info(element,  element.getBoundingClientRect());
             return JSON.parse(JSON.stringify(element.getBoundingClientRect()))
         }, elementHandle);
@@ -711,7 +724,8 @@ export default class ImposterClass {
             boundingBox.y + boundingBox.height <= viewportHeight || ((boundingBox.y + boundingBox.height - viewportHeight) <= 0.2 * viewportHeight) // if its 80% in the view or more, lets count its in the view (linked in "next" button at the end of sign up fails because cant scroll it)
         );
 
-        console.log('boundingBox.y', boundingBox.y, 'page height:', viewportHeight);
+        //console.log('!!!!', boundingBox.y + boundingBox.height, viewportHeight);
+        //console.log('boundingBox.y', boundingBox.y, 'page height:', viewportHeight);
 
         // Determine the direction
         const direction = boundingBox.y + boundingBox.height < (viewportHeight / 2) ? 'up' : 'down';
