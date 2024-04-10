@@ -574,7 +574,7 @@ export default class ImposterClass {
                 return await this.findElementAnywhere(selector, text, timeout); // resetting only startTime
             } else {
                 console.error('UNKNOWN ERROR', e);
-                await i.wait(0.1);
+                await this.wait(0.1);
                 return await this.findElementAnywhere(selector, text, timeout, startTime);
             }
         }
