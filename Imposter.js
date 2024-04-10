@@ -674,15 +674,26 @@ export default class ImposterClass {
     }
 
     // returns random element if there are multiple by the selector, designed to be used in conjuction with .click()
-    async chooseRandom(selector = '', returnRandom) {
-        const el = await this.page.evaluateHandle((selector) => {
-            const elements = document.querySelectorAll(selector);
+    async chooseRandom(selector = '', parent = null, except = []) {
+        // ::TRICKY: have to spread except array so it will be processed
+        const el = await this.page.evaluateHandle((...vars) => {
+            //const selector = vars[0];
+            //const parent = vars[1];
+            const [selector, parent, ...except] = vars;
+
+            const searchIn = (parent) ? parent : document;
+            const elements = searchIn.querySelectorAll(selector);
+            console.log('EXCEPT=', except);
 
             // Get a random index within the array length
-            const randomIndex = Math.floor(Math.random() * elements.length);
+            let randomIndex = null;
+            do {
+                randomIndex = Math.floor(Math.random() * elements.length);
+                console.log('Randomly selected el:', elements[randomIndex], 'exception check:', except.includes(elements[randomIndex]));
+            } while (except.includes(elements[randomIndex]));
 
             return elements[randomIndex];
-        }, selector);
+        }, ...[selector, (parent) ? parent.el : null, ...except]);
 
         return {
             el : el,
