@@ -439,6 +439,8 @@ export default class ImposterClass {
     }
 
     async getChildEl(parentEl, selector, text = null) {
+        text = this.translate(text);
+
         const { el, target, type } = (parentEl.hasOwnProperty('el')) 
             ? {
                 target : this.page,
