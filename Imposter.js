@@ -291,8 +291,8 @@ export default class ImposterClass {
     }
 
     // Clicks on random element
-    async clickRandom(selector) {
-        return await this.click(await this.chooseRandom(selector));
+    async clickRandom(selector, parent = null, except = []) {
+        return await this.click(await this.chooseRandom(selector, parent, except));
     }
 
     // Clicking on an element
@@ -455,15 +455,19 @@ export default class ImposterClass {
         const res = await this.page.evaluateHandle((parent, selector, text) => {
             const els = Array.from(parent.querySelectorAll(selector));
             if (text) {
+                text = String(text);
                 return els.find(el => {
                     // checking if the element is visible, otherwise user cant click it anyway
                     const style = getComputedStyle(el);
                     const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
                     el.offsetWidth > 0 && el.offsetHeight > 0);
 
-                    return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
+                    const res = isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
+                    console.log('getChildEl', res, 'visible:', isVisible, 'el text:', el.textContent.trim().toLowerCase(), 'searching for:', text.toLowerCase());
+                    return res;
                 });
             } else {
+                console.log('getChildEl', els[0]);
                 return els[0];
             }
 
