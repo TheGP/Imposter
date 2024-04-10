@@ -497,6 +497,7 @@ export default class ImposterClass {
         const el = await this.page.evaluateHandle((selector, text) => {
             const els = Array.from(document.querySelectorAll(selector));
             if (text) {
+                text = String(text);
                 const res = els.find(el => {
                     // checking if the element is visible, otherwise user cant click it anyway
                     const style = getComputedStyle(el);
@@ -536,6 +537,7 @@ export default class ImposterClass {
                 const el = await frame.evaluateHandle((selector, text) => {
                     const els = Array.from(document.querySelectorAll(selector));
                     if (text) {
+                        text = String(text);
                         return els.find(el => {
                             //console.log('el', el, el.textContent.trim().toLowerCase())
                             return el.textContent.trim().toLowerCase().includes(text.toLowerCase())
@@ -603,6 +605,7 @@ export default class ImposterClass {
 
             const els = Array.from(parent.querySelectorAll(selector));
             if (text) {
+                text = String(text);
                 const res = els.find(el => {
                     // checking if the element is visible, otherwise user cant click it anyway
                     const style = getComputedStyle(el);
