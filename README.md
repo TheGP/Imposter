@@ -17,7 +17,7 @@ I welcome any help with improving this helper class (except rewriting in TypeScr
 * Selecting from select list with mouse (can open select but need to scroll and select correct element by click, like normal humans do)
 * More human scrolling (need to investigate if different mouses has different  scrolling, message me to get debug script to test it)
 * Clicking on the visible element inside of boundingbox (sometimes the element has a lot of white space around it u can click, but it is not visible for user, so it should be used to click)
-* Support of horizontal scroll (message me to get debug script for mouse wheel positions)
+* Support of horizontal scroll
 * Look for ::TODO:: blocks inside the code
 
 ## Installation
@@ -55,25 +55,26 @@ const webSocketLink = `ws://`;
 
     i.setBehaviorFingerprint({
         mouse: {
-            hesitation: { min: 50, max: 2000 },
-            release: { min: 1, max: 600 }
+            hesitation: { min: 50, max: 2000 }, // Hesitation before click
+            release: { min: 1, max: 600 } // How long to hold a button
         },
         typing: {
-            mistakes: {
+            mistakes: { // Chance of mistakes
                 chance: 4,
                 delay: {
                     min: 50,
                     max: 500
                 }
             },
-            delays: {
+            delays: { // Delays between different set of characters
                 all: { chance: 100, min: 50, max: 150 },
                 complete: { chance: 100, min: 500, max: 1000 },
                 space: { chance: 80, min: 10, max: 100 },
                 punctuation: { chance: 70, min: 50, max: 500 },
                 termination: { chance: 95, min: 100, max: 1000 },
                 cadence: { chance: 100, min: 50, max: 500 },
-            }
+            },
+            noticing_focus : 70, // Noticing that input is already focused and no need to click it
         }
     });
 
@@ -107,38 +108,44 @@ Creates a new instance of the `ImposterClass`.
 - `pageSize`: Object representing the dimensions of the page `{ width, height }`.
 - `behavior`: Object defining behavior configurations for mouse movements and typing.
 
-## Methods
-
 
 ## Methods
 
-### `connect(webSocketLink: string): Promise<void>`
+#### `async connect(webSocketLink: object | string): Promise<void>`
 
-Connects to the browser using the provided WebSocket link.
+Connects to the browser using the provided WebSocket link. Instead of string you can use object with `parameters` which will be passed inside `puppeteer.connect`.
 
 ### `launch(options: Object): Promise<void>`
 
-Launches a new browser instance with the provided options.
+Launches a new browser instance with the provided options, which will be passed to `puppeteer.launch`.
 
 ### `attachToActiveTab(debug: boolean = false): Promise<void>`
 
-Finds the active tab and prepares it for work.
+Finds the active tab and prepares it for work. After that it will be available under `.page` prop.
 
 ### `setBehaviorFingerprint(behavior: Object): Promise<void>`
 
-Sets behavior fingerprint for simulating human-like behaviors.
+Sets behavior fingerprint for simulating human-like behaviors. Useful for simulating different types of users.
 
 ### `goto(url: string): Promise<void>`
 
-Navigates to the specified URL.
+Navigates to the specified URL. If `.page` prop is empty opens new tab.
 
 ### `newPage(): Promise<void>`
 
-Opens a new page.
+Opens a new page and prepares it for work.
 
-### `type(selector: string|Object, string: string): Promise<void>`
+#### `async type(selector: string | object, string: string, keepExistingText: boolean = false): Promise<void>`
 
-Simulates typing into a specified element.
+Simulates typing into a specified element. By default removes the exists text from the field. Use symbol ⌫ to emulate backspace.
+`selector` can be an object of format:
+```
+{
+    el: ElementHandle
+    target: instance of page | frame
+    type: string['page' | 'frame']
+}
+```
 
 ### `click(selectorOrObj: string|Object, text: string|null = null, timeout: number = 10): Promise<void>`
 
@@ -168,49 +175,57 @@ Selects an option from a dropdown element.
 
 Gets the value of the specified attribute of an element.
 
-### `isThere(selector: string, text: string|null = null, timeout: number = 10): Promise<boolean>`
+#### `async isThere(selector: string, text: string | null = null, timeout: number = 1): Promise<boolean>`
 
-Checks if the specified element is present on the page.
+Checks if the specified element is present on the page. Timeout is how long to wait for the element.
 
-### `find(selector: string, text: string|null = null, timeout: number = 10): Promise<Object|null>`
+#### `async findChildEl(elObjOrSelector: string | object, selectorChild: string, textChild: string | null = null): Promise<object>`
+
+Finds a child element within a given parent element or selector.
+
+#### `async findElNearBy(selectorChild: string, childText: string, selectorParent: string, selectorChild2: string, childText2: string): Promise<object>`
+
+Finds an element, then finds its parents, then finds another child again. Useful to find elements without selectors: first you search for a title of a block, then you select the block itself, and then select the needed child.
+
+#### `async findElementAnywhere(selector: string, text: string | null = null, timeout: number = 10, startTime: number = Date.now()): Promise<object>`
 
 Finds the specified element anywhere on the page or within frames.
 
-### `getFrame(startWith = '', debug = false): Promise<Object|null>`
+#### `async getFrame(startWith: string = '', debug: boolean = false): Promise<object>`
 
 Get the frame that starts with a specified URL.
 
-### `isElementInView(selector, target = this.page): Promise<Object>`
+#### `async isElementInView(selector: string | object, target: object = this.page): Promise<{ isInView: boolean, direction: string }>`
 
 Checks if an element is in view and gives directions where to scroll.
 
-### `findFirstElementOnScreen(selector): Promise<Object>`
+#### `async findFirstElementOnScreen(selector: string): Promise<object>`
 
 Finds the first element that is currently on the screen and most visible.
 
-### `shakeMouse(): Promise<void>`
+#### `async shakeMouse(): Promise<void>`
 
 Shakes the mouse a bit to emulate human-like movement.
 
-### `jitterMouse(options): Promise<void>`
+#### `async jitterMouse(options: object): Promise<void>`
 
 Shakes the mouse with jitter.
 
-### `isThereCaptcha(): Promise<string|boolean>`
+#### `async isThereCaptcha(): Promise<string | boolean>`
 
-Checks if there is a captcha on the page and returns its name.
+Checks if there is a captcha on the page and returns its name. Supports `arkose` and `recaptcha`.
 
 ### `getParamsArkoseCaptcha(): Promise<Object>`
 
 Gets parameters for Arkose captcha.
 
-### `waitTillHTMLRendered(timeout = 15): Promise<void>`
+#### `async waitTillHTMLRendered(minStableSizeIterations: number = 3, timeout: number = 15): Promise<void>`
 
 Waits for the HTML to be fully rendered.
 
 ### `chance(percentage): boolean`
 
-Returns true with a given percentage chance.
+Returns true with a given percentage chance. Useful to make some actions with some specified chance.
 
 ### `random(min, max): number`
 
@@ -220,13 +235,10 @@ Gets a random number between the specified range.
 
 Alias for `random(min, max)`.
 
-### `randomInteger(min, max, except = []): number`
-
-Gets a random integer number within the specified range, excluding certain values.
-
 ### `randInt(min, max, except = []): number`
 
-Alias for `randomInteger(min, max, except)`.
+Gets a random integer number within the specified range, excluding certain values.
+Pass all numbers you don't want to see in `except` array (useful while selecting multiple items randomly to not repeat yourself)
 
 ### `waitRandom(min, max): Promise<void>`
 

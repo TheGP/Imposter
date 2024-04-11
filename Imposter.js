@@ -635,6 +635,7 @@ export default class ImposterClass {
     }
 
     // Finds element near by
+    // ::TODO:: make ability to select parent as "go 2 divs up" etc
     async findElNearBy(selectorChild, childText, selectorParent, selectorChild2, childText2) {
         this.recordAction('findElNearBy', [ selectorChild, childText, selectorParent, selectorChild2, childText2 ]);
         const parentEl = await this.findClosestParentEl(selectorChild, selectorParent, childText);
