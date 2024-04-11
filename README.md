@@ -1,6 +1,6 @@
 # The Imposter
 
-Ultimate humanizing helper for Puppeteer.
+The most advanced humanizing wrapper over Puppeteer.
 
 Consists following packages:
 * Forked [Puppeteer Humanize](https://github.com/force-adverse/puppeteer-humanize) for typing with mistakes and delays
@@ -111,7 +111,7 @@ Creates a new instance of the `ImposterClass`.
 
 ## Methods
 
-#### `async connect(webSocketLink: object | string): Promise<void>`
+### `async connect(webSocketLink: object | string): Promise<void>`
 
 Connects to the browser using the provided WebSocket link. Instead of string you can use object with `parameters` which will be passed inside `puppeteer.connect`.
 
@@ -135,7 +135,7 @@ Navigates to the specified URL. If `.page` prop is empty opens new tab.
 
 Opens a new page and prepares it for work.
 
-#### `async type(selector: string | object, string: string, keepExistingText: boolean = false): Promise<void>`
+### `async type(selector: string | object, string: string, keepExistingText: boolean = false): Promise<void>`
 
 Simulates typing into a specified element. By default removes the exists text from the field. Use symbol ⌫ to emulate backspace.
 `selector` can be an object of format:
@@ -175,43 +175,43 @@ Selects an option from a dropdown element.
 
 Gets the value of the specified attribute of an element.
 
-#### `async isThere(selector: string, text: string | null = null, timeout: number = 1): Promise<boolean>`
+### `async isThere(selector: string, text: string | null = null, timeout: number = 1): Promise<boolean>`
 
 Checks if the specified element is present on the page. Timeout is how long to wait for the element.
 
-#### `async findChildEl(elObjOrSelector: string | object, selectorChild: string, textChild: string | null = null): Promise<object>`
+### `async findChildEl(elObjOrSelector: string | object, selectorChild: string, textChild: string | null = null): Promise<object>`
 
 Finds a child element within a given parent element or selector.
 
-#### `async findElNearBy(selectorChild: string, childText: string, selectorParent: string, selectorChild2: string, childText2: string): Promise<object>`
+### `async findElNearBy(selectorChild: string, childText: string, selectorParent: string, selectorChild2: string, childText2: string): Promise<object>`
 
 Finds an element, then finds its parents, then finds another child again. Useful to find elements without selectors: first you search for a title of a block, then you select the block itself, and then select the needed child.
 
-#### `async findElementAnywhere(selector: string, text: string | null = null, timeout: number = 10, startTime: number = Date.now()): Promise<object>`
+### `async findElementAnywhere(selector: string, text: string | null = null, timeout: number = 10, startTime: number = Date.now()): Promise<object>`
 
 Finds the specified element anywhere on the page or within frames.
 
-#### `async getFrame(startWith: string = '', debug: boolean = false): Promise<object>`
+### `async getFrame(startWith: string = '', debug: boolean = false): Promise<object>`
 
 Get the frame that starts with a specified URL.
 
-#### `async isElementInView(selector: string | object, target: object = this.page): Promise<{ isInView: boolean, direction: string }>`
+### `async isElementInView(selector: string | object, target: object = this.page): Promise<{ isInView: boolean, direction: string }>`
 
 Checks if an element is in view and gives directions where to scroll.
 
-#### `async findFirstElementOnScreen(selector: string): Promise<object>`
+### `async findFirstElementOnScreen(selector: string): Promise<object>`
 
 Finds the first element that is currently on the screen and most visible.
 
-#### `async shakeMouse(): Promise<void>`
+### `async shakeMouse(): Promise<void>`
 
 Shakes the mouse a bit to emulate human-like movement.
 
-#### `async jitterMouse(options: object): Promise<void>`
+### `async jitterMouse(options: object): Promise<void>`
 
 Shakes the mouse with jitter.
 
-#### `async isThereCaptcha(): Promise<string | boolean>`
+### `async isThereCaptcha(): Promise<string | boolean>`
 
 Checks if there is a captcha on the page and returns its name. Supports `arkose` and `recaptcha`.
 
@@ -219,7 +219,7 @@ Checks if there is a captcha on the page and returns its name. Supports `arkose`
 
 Gets parameters for Arkose captcha.
 
-#### `async waitTillHTMLRendered(minStableSizeIterations: number = 3, timeout: number = 15): Promise<void>`
+### `async waitTillHTMLRendered(minStableSizeIterations: number = 3, timeout: number = 15): Promise<void>`
 
 Waits for the HTML to be fully rendered.
 
