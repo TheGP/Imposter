@@ -68,7 +68,8 @@ export default class ImposterClass {
 
     // Connect to the browser
     // Supports webSocketLink or object like  { browserURL: `http://127.0.0.1:9222` }
-    async connect(webSocketLink) {
+    // Tries again one more time if in 5 sec connection hasn't been established
+    async connect(webSocketLink, attempt = 0) {
 
         const params = ('object' === typeof webSocketLink) ? {
                 protocolTimeout: 1800000, // 30 min timeout
@@ -79,7 +80,22 @@ export default class ImposterClass {
                 defaultViewport: null,
             };
 
-        this.browser = await puppeteer.connect(params);
+        try {
+            this.browser = await Promise.race([
+                puppeteer.connect(params),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000))
+            ]);
+        } catch (error) {
+            // Restarting connection
+            if (0 === attempt) {
+                return this.connect(webSocketLink, ++attempt);
+            }
+            console.error('Connection failed:', error.message);
+            return false;
+        }
+
+        //this.browser = await puppeteer.connect(params);
+        return true;
     }
 
     // Launch the browser
