@@ -511,9 +511,35 @@ export default class ImposterClass {
 
     // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
     async findElementAnywhere(selector, text = null, timeout = 10, startTime = Date.now()) {
-        selector = this.tryTranslate(selector);
-        text = this.translate(text);
-        console.info(`findElementAnywhere`, selector, text);
+        const selectorOriginal = selector;
+        const textOriginal = text;
+
+        if (-2 === startTime) { // doing it in reverse
+            if (this.dictionary.hasOwnProperty(this.lang)) {
+                // it was translated by default, so trying not to translate
+            } else {
+                // it was not translate, so trying to translate
+                const langOriginal = this.lang;
+                this.lang = Object.keys(this.dictionary)[0];
+                selector = this.tryTranslate(selector);
+                text = this.translate(text);
+                this.lang = langOriginal;
+
+                if (selector === selectorOriginal && text === textOriginal) {
+                    // if no changes in selector and text after translating it - failing
+                    return {
+                        target : false,
+                        el : false,
+                        type : 'page',
+                    };
+                }
+            }
+        } else {
+            selector = this.tryTranslate(selector);
+            text = this.translate(text);
+        }
+
+        console.info(`findElementAnywhere`, selector, text, timeout, startTime);
 
         try {
         const el = await this.page.evaluateHandle((selector, text) => {
@@ -594,7 +620,20 @@ export default class ImposterClass {
         // trying again in 1 sec if time out is not yet reached
         if (Date.now() <= startTime + timeout * 1000) {
             await this.wait(1);
-            return this.findElementAnywhere(selector, text, timeout, startTime);
+            return this.findElementAnywhere(selectorOriginal, textOriginal, timeout, startTime);
+        }
+        // trying to execute special function that set in case el is not found and then try to find it one last time
+        if (-1 !== startTime && -2 !== startTime && this.callbackFailToFindElement && !this.callbackFailToFindElementExecuting) {
+            console.info(`Trying to execute special callback function`);
+            this.callbackFailToFindElementExecuting = true;
+            await this.callbackFailToFindElement();
+            this.callbackFailToFindElementExecuting = false;
+            return this.findElementAnywhere(selectorOriginal, textOriginal, 0, -1);
+        }
+        // trying to find it again without translation if it was
+        if (-2 !== startTime && (this.dictionary.hasOwnProperty(this.lang) || 0 < Object.keys(this.dictionary).length)) {
+            console.info(`Trying to translate or not translate`);
+            return this.findElementAnywhere(selectorOriginal, textOriginal, 0, -2);
         }
 
         return {
@@ -1049,7 +1088,7 @@ export default class ImposterClass {
     // Translating string based on dictionary
     translate(string) {
         if ('string' !== typeof string) return string;
-        return (this.dictionary.hasOwnProperty(string)) ? this.dictionary[string] : string;
+        return (this.dictionary.hasOwnProperty(this.lang) && this.dictionary[this.lang].hasOwnProperty(string)) ? this.dictionary[this.lang][string] : string;
     }
 
     // Translating text even it is inside the string like `input[placeholder="Ex: Boston University"]`
@@ -1057,17 +1096,20 @@ export default class ImposterClass {
         if ('string' !== typeof string) return string;
 
         console.info('tryTranslate', string);
-        for (const key in this.dictionary) {
-            //console.log('key=', key);
-            // replacing only if the string doesnt have nearby text, for example if replacing test: testtest wont be, but test"test will be
-            string = string.replace(new RegExp("\\b" + key + "\\b", "g"), this.dictionary[key]);
-            //console.log('after replacement=', string);
+
+        if (this.dictionary.hasOwnProperty(this.lang)) {
+            for (const key in this.dictionary[this.lang]) {
+                //console.log('key=', key);
+                // replacing only if the string doesnt have nearby text, for example if replacing test: testtest wont be, but test"test will be
+                string = string.replace(new RegExp("\\b" + key + "\\b", "g"), this.dictionary[this.lang][key]);
+                //console.log('after replacement=', string);
+            }
         }
         return string;
     }
 
-    setDictionary(dictionary) {
-        this.dictionary = dictionary;
+    setDictionary(dictionary, lang) {
+        this.dictionary[lang] = dictionary;
     }
 }
 
