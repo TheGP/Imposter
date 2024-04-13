@@ -575,7 +575,7 @@ export default class ImposterClass {
 
                     console.log('el:', el, isVisible);
 
-                    return isVisible;
+                    return (isVisible) ? el : null;
                 }
 
                 return el;
