@@ -540,7 +540,19 @@ export default class ImposterClass {
                 console.log('RES=', res);
                 return res;
             } else {
-                return els[0];
+                const el = els[0];
+
+                if (el) {
+                    const style = getComputedStyle(el);
+                    const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
+                    el.offsetWidth > 0 && el.offsetHeight > 0);
+
+                    console.log('el:', el, isVisible);
+
+                    return isVisible;
+                }
+
+                return el;
             }
         }, selector, text);
 
