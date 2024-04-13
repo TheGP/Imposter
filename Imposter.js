@@ -35,6 +35,7 @@ export default class ImposterClass {
     scroller;
     pageSize = { width : 0, height: 0 };
     dictionary = {};
+    lang = 'en';
     behavior = {
         mouse: {
             hesitation: { min: 50, max: 2000 },
@@ -61,6 +62,8 @@ export default class ImposterClass {
     };
     actionsHistory = [];
     actionsHistoryRecording = true;
+    callbackFailToFindElement = null;
+    callbackFailToFindElementExecuting = false;
 
     constructor() {
         this.puppeteer = puppeteer;
@@ -139,7 +142,7 @@ export default class ImposterClass {
 
     // Attaches all needed helpers to the page
     async attachAllToPage() {
-        await installMouseHelper(this.page);
+        //await installMouseHelper(this.page);
         this.cursor = createCursor(this.page, await getRandomPagePoint(this.page), true)
         this.scroller = await humanScroll(this.page);
     }
@@ -239,7 +242,6 @@ export default class ImposterClass {
         console.log('click', selectorOrObj, text);
         if ('object' === typeof selectorOrObj && selectorOrObj instanceof Promise) selectorOrObj = await selectorOrObj;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
         this.recordAction('click', [ selectorOrObj, text, timeout ]);
-        text = this.translate(text);
 
         await this.waitRandom(0.2, 1.2);
         //await this.waitForNetworkIdle(1);
@@ -403,6 +405,7 @@ export default class ImposterClass {
         await this.browser.close()
     }
 
+    // ::TODO:: skip if selected value is correct already
     async select(selector, value) {
         console.log('select', selector, value);
 
