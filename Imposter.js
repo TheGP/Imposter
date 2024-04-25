@@ -132,7 +132,7 @@ export default class ImposterClass {
 
         if (!activeTab) {
             await this.newPage();
-            return attachToActiveTab(debug);
+            return this.attachToActiveTab(debug);
         }
 
         console.info('activeTab', activeTab.url())
