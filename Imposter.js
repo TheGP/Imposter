@@ -658,13 +658,24 @@ export default class ImposterClass {
         }
     }
 
-    async findClosestParentEl(selectorChild, selectorParent, childText = null) {
+    async findClosestParentEl(selectorChild, selectorParent, childText = null, timeout = 10) {
         childText = this.translate(childText);
-        const { el, target, type } = await this.findElementAnywhere(selectorChild, childText);
+        const { el, target, type } = ('object' === typeof selectorChild) ? selectorChild : await this.findElementAnywhere(selectorChild, childText, timeout);
+
+        if (!el) {
+            return {
+                target : false,
+                el : false,
+                type : 'page',
+            };
+        }
 
         return {
             el : await target.evaluateHandle((el, selector) => {
-                //console.info('!!!', el.closest(selector));
+                // If its same element, getting parent first and then searching
+                if (el.closest(selector), el === el.closest(selector)) {
+                    return el.parentElement.closest(selector)
+                }
                 return el.closest(selector);
             }, el, selectorParent),
             target: target, 
