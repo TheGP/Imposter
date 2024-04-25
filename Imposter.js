@@ -165,7 +165,9 @@ export default class ImposterClass {
         }
         
         try {
-            await this.page.goto(url)
+            if (url !== this.page.url()) { // Opening url if its not the correct one already
+                await this.page.goto(url);
+            }
         } catch (error) {
             console.error('network error?');
             console.error(error);
