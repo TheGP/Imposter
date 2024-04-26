@@ -295,6 +295,7 @@ export default class ImposterClass {
         }
         await this.scrollTo(el, target);
 
+        // ::TODO:: break the loop using timeout?
         const isDisabled = await el.asElement().evaluate(element => element.disabled);
         if (isDisabled) {
             console.info('waiting for el to become enabled');
@@ -549,6 +550,7 @@ export default class ImposterClass {
         try {
         const el = await this.page.evaluateHandle((selector, text) => {
             const els = Array.from(document.querySelectorAll(selector));
+
             if (text) {
                 text = String(text);
                 const res = els.find(el => {
@@ -774,12 +776,13 @@ export default class ImposterClass {
             const searchIn = (parent) ? parent : document;
             const elements = searchIn.querySelectorAll(selector);
             console.log('EXCEPT=', except);
+            console.log('elements=', elements);
 
             // Get a random index within the array length
             let randomIndex = null;
             do {
                 randomIndex = Math.floor(Math.random() * elements.length);
-                console.log('Randomly selected el:', elements[randomIndex], 'exception check:', except.includes(elements[randomIndex]));
+                console.log(`Randomly selected el ${randomIndex}:`, elements[randomIndex], 'exception check:', except.includes(elements[randomIndex]));
             } while (except.includes(elements[randomIndex]));
 
             return elements[randomIndex];
