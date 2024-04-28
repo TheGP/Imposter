@@ -1127,7 +1127,7 @@ export default class ImposterClass {
         return string;
     }
 
-    setDictionary(dictionary, lang) {
+    setDictionary(lang, dictionary) {
         this.dictionary[lang] = dictionary;
     }
 }
