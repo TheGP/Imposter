@@ -156,7 +156,7 @@ export default class ImposterClass {
     }
 
     // Open url
-    async goto(url) {
+    async goto(url, referer = null) {
         this.recordAction('goto', [ url ]);
 
         if (!this.page) {
@@ -166,7 +166,8 @@ export default class ImposterClass {
         
         try {
             if (url !== this.page.url()) { // Opening url if its not the correct one already
-                await this.page.goto(url);
+                const options = (referer) ? { referer: referer } : {};
+                await this.page.goto(url, options);
             }
         } catch (error) {
             console.error('network error?');
