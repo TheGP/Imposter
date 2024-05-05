@@ -524,6 +524,15 @@ export default class ImposterClass {
         if (-2 === startTime) { // doing it in reverse
             if (this.dictionary.hasOwnProperty(this.lang)) {
                 // it was translated by default, so trying not to translate
+                // but first checking if translation changed anything
+                if (this.tryTranslate(selector) === selectorOriginal && this.translate(text) === textOriginal) {
+                    // if no changes in selector and text after translating it - failing
+                    return {
+                        target : false,
+                        el : false,
+                        type : 'page',
+                    };
+                }
             } else {
                 // it was not translate, so trying to translate
                 const langOriginal = this.lang;
