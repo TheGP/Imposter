@@ -567,8 +567,7 @@ export default class ImposterClass {
                     // checking if the element is visible, otherwise user cant click it anyway
                     const style = getComputedStyle(el);
                     const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
-                    el.offsetWidth > 0 && el.offsetHeight > 0);
-
+                        (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
                     
                     console.log(
                         el.textContent.trim().toLowerCase(), 
@@ -588,9 +587,9 @@ export default class ImposterClass {
                 if (el) {
                     const style = getComputedStyle(el);
                     const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
-                    el.offsetWidth > 0 && el.offsetHeight > 0);
-
-                    console.log('el:', el, isVisible);
+                        (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
+                    
+                    console.log('el:', el, isVisible, 'vis=', style.display, style.visibility, style.opacity, el.offsetWidth, el.offsetHeight);
 
                     return (isVisible) ? el : null;
                 }
@@ -611,16 +610,41 @@ export default class ImposterClass {
             //console.log('frames', frames);
             for (const frame of frames) {
                 //console.info(`searching in frame = ` + await frame.url())
+                
                 const el = await frame.evaluateHandle((selector, text) => {
                     const els = Array.from(document.querySelectorAll(selector));
                     if (text) {
                         text = String(text);
                         return els.find(el => {
+                            const style = getComputedStyle(el);
+                            const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
+                                (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
+
+                            console.log(
+                                el.textContent.trim().toLowerCase(), 
+                                'searching for=', 
+                                text.toLowerCase(), 
+                                el.textContent.trim().toLowerCase().includes(text.toLowerCase()),
+                                isVisible
+                            );
+
                             //console.log('el', el, el.textContent.trim().toLowerCase())
-                            return el.textContent.trim().toLowerCase().includes(text.toLowerCase())
+                            return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase())
                         });
                     } else {
-                        return els[0];
+                        const el = els[0];
+
+                        if (el) {
+                            const style = getComputedStyle(el);
+                            const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
+                                (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
+        
+                                console.log('el:', el, isVisible, 'vis=', style.display, style.visibility, style.opacity, el.offsetWidth, el.offsetHeight);
+        
+                            return (isVisible) ? el : null;
+                        }
+        
+                        return el;
                     }
                 }, selector, text);
 
@@ -639,6 +663,7 @@ export default class ImposterClass {
             await this.wait(1);
             return this.findElementAnywhere(selectorOriginal, textOriginal, timeout, startTime);
         }
+
         // trying to execute special function that set in case el is not found and then try to find it one last time
         if (-1 !== startTime && -2 !== startTime && this.callbackFailToFindElement && !this.callbackFailToFindElementExecuting) {
             console.info(`Trying to execute special callback function`);
