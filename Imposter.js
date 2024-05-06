@@ -318,11 +318,21 @@ export default class ImposterClass {
     }
 
     // Clicking on an element
-    async clickSimple(selector) {
-        await this.cursor.click(selector, {
-            hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
-            waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
-        })
+    async clickSimple(selector, attempt = 0) {
+        try {
+            await this.cursor.click(selector, {
+                hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
+                waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
+            })
+        } catch (e) {
+            console.error(`this.cursor.click error:`, e);
+            if (0 === attempt) {
+                console.log(`Trying again one time`);
+                return this.clickSimple(selector, ++attempt);
+            } else {
+                throw `this.cursor.click error`;
+            }
+        }
     }
 
     // Just typing into element
