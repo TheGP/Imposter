@@ -315,17 +315,21 @@ export default class ImposterClass {
     }
 
     // Clicking on an element
-    async clickSimple(selector, attempt = 0) {
+    async clickSimple(selectorOrObject, attempt = 0) {
         try {
-            await this.cursor.click(selector, {
+            await this.cursor.click(selectorOrObject, {
                 hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
                 waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
             })
         } catch (e) {
             console.error(`this.cursor.click error:`, e);
+            await this.page.evaluate((selectorOrObject) => {
+                console.log('El which we are failing to click:', selectorOrObject);
+            }, selectorOrObject);
+
             if (0 === attempt) {
                 console.log(`Trying again one time`);
-                return this.clickSimple(selector, ++attempt);
+                return this.clickSimple(selectorOrObject, ++attempt);
             } else {
                 throw `this.cursor.click error`;
             }
