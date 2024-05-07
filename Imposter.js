@@ -569,22 +569,39 @@ export default class ImposterClass {
 
         try {
         const el = await this.page.evaluateHandle((selector, text) => {
+            const visibilityCheck = (el) => {
+                const style = getComputedStyle(el);
+                const isVisible = (
+                    style.display !== 'none' && 
+                    style.visibility !== 'hidden' && 
+                    (style.opacity !== '0' || 'SELECT' === el.tagName) && // sometimes select is hidden with opacity to be made more beautiful, but options will be visible on click
+                    (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && 
+                    (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
+                
+                console.log(
+                    'Visibility check, el=',
+                    el,
+                    isVisible,
+                    'visibility=',
+                    style.display, style.visibility, style.opacity, el.tagName, el.offsetWidth, el.offsetHeight
+                );
+    
+                return isVisible;
+            }
+
             const els = Array.from(document.querySelectorAll(selector));
 
             if (text) {
                 text = String(text);
                 const res = els.find(el => {
                     // checking if the element is visible, otherwise user cant click it anyway
-                    const style = getComputedStyle(el);
-                    const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
-                        (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
-                    
+                    const isVisible = visibilityCheck(el);
+
                     console.log(
                         el.textContent.trim().toLowerCase(), 
                         'searching for=', 
                         text.toLowerCase(), 
                         el.textContent.trim().toLowerCase().includes(text.toLowerCase()),
-                        isVisible
                     );
                 
                     return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
@@ -595,12 +612,7 @@ export default class ImposterClass {
                 const el = els[0];
 
                 if (el) {
-                    const style = getComputedStyle(el);
-                    const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
-                        (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
-                    
-                    console.log('el:', el, isVisible, 'vis=', style.display, style.visibility, style.opacity, el.offsetWidth, el.offsetHeight);
-
+                    const isVisible = visibilityCheck(el);
                     return (isVisible) ? el : null;
                 }
 
@@ -622,20 +634,37 @@ export default class ImposterClass {
                 //console.info(`searching in frame = ` + await frame.url())
                 
                 const el = await frame.evaluateHandle((selector, text) => {
+                    const visibilityCheck = (el) => {
+                        const style = getComputedStyle(el);
+                        const isVisible = (
+                            style.display !== 'none' && 
+                            style.visibility !== 'hidden' && 
+                            (style.opacity !== '0' || 'SELECT' === el.tagName) && // sometimes select is hidden with opacity to be made more beautiful, but options will be visible on click
+                            (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && 
+                            (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
+                        
+                        console.log(
+                            'Visibility check, el=',
+                            el,
+                            isVisible,
+                            'visibility=',
+                            style.display, style.visibility, style.opacity, el.tagName, el.offsetWidth, el.offsetHeight
+                        );
+            
+                        return isVisible;
+                    }
+
                     const els = Array.from(document.querySelectorAll(selector));
                     if (text) {
                         text = String(text);
                         return els.find(el => {
-                            const style = getComputedStyle(el);
-                            const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
-                                (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
+                            const isVisible = visibilityCheck(el);
 
                             console.log(
                                 el.textContent.trim().toLowerCase(), 
                                 'searching for=', 
                                 text.toLowerCase(), 
-                                el.textContent.trim().toLowerCase().includes(text.toLowerCase()),
-                                isVisible
+                                el.textContent.trim().toLowerCase().includes(text.toLowerCase())
                             );
 
                             //console.log('el', el, el.textContent.trim().toLowerCase())
@@ -645,12 +674,7 @@ export default class ImposterClass {
                         const el = els[0];
 
                         if (el) {
-                            const style = getComputedStyle(el);
-                            const isVisible = (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' &&
-                                (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
-        
-                                console.log('el:', el, isVisible, 'vis=', style.display, style.visibility, style.opacity, el.offsetWidth, el.offsetHeight);
-        
+                            const isVisible = visibilityCheck(el);
                             return (isVisible) ? el : null;
                         }
         
