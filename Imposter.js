@@ -304,10 +304,7 @@ export default class ImposterClass {
             return await this.click(selectorOrObj, text, timeout);
         }
 
-        await this.cursor.click(el, {
-            hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
-            waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
-        })
+        await this.clickSimple(el);
         
         await this.waitTillHTMLRendered();
     }
