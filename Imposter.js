@@ -579,15 +579,15 @@ export default class ImposterClass {
                     style.display !== 'none' && 
                     style.visibility !== 'hidden' && 
                     (style.opacity !== '0' || 'SELECT' === el.tagName) && // sometimes select is hidden with opacity to be made more beautiful, but options will be visible on click
-                    (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && 
-                    (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
+                    (el.offsetWidth === undefined || el.offsetWidth > 0) && 
+                    (el.offsetHeight === undefined || el.offsetHeight > 0));
                 
                 console.log(
                     'Visibility check, el=',
                     el,
                     isVisible,
-                    'visibility=',
-                    style.display, style.visibility, style.opacity, el.tagName, el.offsetWidth, el.offsetHeight
+                    'visibility conditions:',
+                    'display=', style.display, 'visibility=', style.visibility, style.opacity, el.tagName, el.offsetWidth, el.offsetHeight, el.offsetWidth === undefined, el.offsetHeight === undefined
                 );
     
                 return isVisible;
@@ -599,15 +599,14 @@ export default class ImposterClass {
                 text = String(text);
                 const res = els.find(el => {
                     // checking if the element is visible, otherwise user cant click it anyway
-                    const isVisible = visibilityCheck(el);
-
                     console.log(
                         el.textContent.trim().toLowerCase(), 
                         'searching for=', 
                         text.toLowerCase(), 
                         el.textContent.trim().toLowerCase().includes(text.toLowerCase()),
                     );
-                
+                    
+                    const isVisible = visibilityCheck(el);
                     return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
                 });
                 console.log('RES=', res);
@@ -647,8 +646,8 @@ export default class ImposterClass {
                             style.display !== 'none' && 
                             style.visibility !== 'hidden' && 
                             (style.opacity !== '0' || 'SELECT' === el.tagName) && // sometimes select is hidden with opacity to be made more beautiful, but options will be visible on click
-                            (!el.hasOwnProperty('offsetWidth') || el.offsetWidth > 0) && 
-                            (!el.hasOwnProperty('offsetHeight') || el.offsetHeight > 0));
+                            (el.offsetWidth === undefined || el.offsetWidth > 0) && 
+                            (el.offsetHeight === undefined || el.offsetHeight > 0));
                         
                         console.log(
                             'Visibility check, el=',
@@ -665,8 +664,6 @@ export default class ImposterClass {
                     if (text) {
                         text = String(text);
                         return els.find(el => {
-                            const isVisible = visibilityCheck(el);
-
                             console.log(
                                 el.textContent.trim().toLowerCase(), 
                                 'searching for=', 
@@ -675,6 +672,7 @@ export default class ImposterClass {
                             );
 
                             //console.log('el', el, el.textContent.trim().toLowerCase())
+                            const isVisible = visibilityCheck(el);
                             return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase())
                         });
                     } else {
