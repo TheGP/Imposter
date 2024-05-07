@@ -527,7 +527,7 @@ export default class ImposterClass {
     }
 
     // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
-    async findElementAnywhere(selector, text = null, timeout = 10, startTime = Date.now()) {
+    async findElementAnywhere(selector, text = null, timeout = 10, ignoreVisibility = false, startTime = Date.now()) {
         const selectorOriginal = selector;
         const textOriginal = text;
 
@@ -565,11 +565,14 @@ export default class ImposterClass {
             text = this.translate(text);
         }
 
-        console.info(`findElementAnywhere`, selector, text, timeout, startTime);
+        console.info(`findElementAnywhere`, selector, text, timeout, ignoreVisibility, startTime);
 
         try {
-        const el = await this.page.evaluateHandle((selector, text) => {
+        const el = await this.page.evaluateHandle((ignoreVisibility, selector, text) => {
             const visibilityCheck = (el) => {
+                if (ignoreVisibility) {
+                    return true;
+                }
                 const style = getComputedStyle(el);
                 const isVisible = (
                     style.display !== 'none' && 
@@ -618,7 +621,7 @@ export default class ImposterClass {
 
                 return el;
             }
-        }, selector, text);
+        }, ignoreVisibility, selector, text);
 
         if (el.asElement()) {
             return {
@@ -633,8 +636,11 @@ export default class ImposterClass {
             for (const frame of frames) {
                 //console.info(`searching in frame = ` + await frame.url())
                 
-                const el = await frame.evaluateHandle((selector, text) => {
+                const el = await frame.evaluateHandle((ignoreVisibility, selector, text) => {
                     const visibilityCheck = (el) => {
+                        if (ignoreVisibility) {
+                            return true;
+                        }
                         const style = getComputedStyle(el);
                         const isVisible = (
                             style.display !== 'none' && 
@@ -680,7 +686,7 @@ export default class ImposterClass {
         
                         return el;
                     }
-                }, selector, text);
+                }, ignoreVisibility, selector, text);
 
                 if (el.asElement()) {
                     return {
@@ -695,7 +701,7 @@ export default class ImposterClass {
         // trying again in 1 sec if time out is not yet reached
         if (Date.now() <= startTime + timeout * 1000) {
             await this.wait(1);
-            return this.findElementAnywhere(selectorOriginal, textOriginal, timeout, startTime);
+            return this.findElementAnywhere(selectorOriginal, textOriginal, timeout, ignoreVisibility, startTime);
         }
 
         // trying to execute special function that set in case el is not found and then try to find it one last time
@@ -709,7 +715,7 @@ export default class ImposterClass {
         // trying to find it again without translation if it was
         if (-2 !== startTime && (this.dictionary.hasOwnProperty(this.lang) || 0 < Object.keys(this.dictionary).length)) {
             console.info(`Trying to translate or not translate`);
-            return this.findElementAnywhere(selectorOriginal, textOriginal, 0, -2);
+            return this.findElementAnywhere(selectorOriginal, textOriginal, 0, ignoreVisibility, -2);
         }
 
         return {
@@ -731,7 +737,7 @@ export default class ImposterClass {
 
     async findClosestParentEl(selectorChild, selectorParent, childText = null, timeout = 10) {
         childText = this.translate(childText);
-        const { el, target, type } = ('object' === typeof selectorChild) ? selectorChild : await this.findElementAnywhere(selectorChild, childText, timeout);
+        const { el, target, type } = ('object' === typeof selectorChild) ? selectorChild : await this.findElementAnywhere(selectorChild, childText, timeout, true);
 
         if (!el) {
             return {
