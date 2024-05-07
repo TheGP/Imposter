@@ -457,7 +457,7 @@ export default class ImposterClass {
     async isThere(selector, text = null, timeout = 1) {
         await this.waitTillHTMLRendered(2);
 
-        const { el, target } = await this.findElementAnywhere(selector, text, timeout);
+        const { el, target } = await this.findElementAnywhere(selector, text, timeout, false, true);
         return (el && el.asElement()) ? true : false;
     }
 
@@ -527,7 +527,7 @@ export default class ImposterClass {
     }
 
     // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
-    async findElementAnywhere(selector, text = null, timeout = 10, ignoreVisibility = false, startTime = Date.now()) {
+    async findElementAnywhere(selector, text = null, timeout = 10, ignoreVisibility = false, noDigging = false, startTime = Date.now()) {
         const selectorOriginal = selector;
         const textOriginal = text;
 
@@ -565,7 +565,7 @@ export default class ImposterClass {
             text = this.translate(text);
         }
 
-        console.info(`findElementAnywhere`, selector, text, timeout, ignoreVisibility, startTime);
+        console.info(`findElementAnywhere`, selector, text, timeout, ignoreVisibility, noDigging, startTime);
 
         try {
         const el = await this.page.evaluateHandle((ignoreVisibility, selector, text) => {
@@ -701,21 +701,21 @@ export default class ImposterClass {
         // trying again in 1 sec if time out is not yet reached
         if (Date.now() <= startTime + timeout * 1000) {
             await this.wait(1);
-            return this.findElementAnywhere(selectorOriginal, textOriginal, timeout, ignoreVisibility, startTime);
+            return this.findElementAnywhere(selectorOriginal, textOriginal, timeout, ignoreVisibility, noDigging, startTime);
         }
 
         // trying to execute special function that set in case el is not found and then try to find it one last time
-        if (-1 !== startTime && -2 !== startTime && this.callbackFailToFindElement && !this.callbackFailToFindElementExecuting) {
+        if (!noDigging && -1 !== startTime && -2 !== startTime && this.callbackFailToFindElement && !this.callbackFailToFindElementExecuting) {
             console.info(`Trying to execute special callback function`);
             this.callbackFailToFindElementExecuting = true;
             await this.callbackFailToFindElement();
             this.callbackFailToFindElementExecuting = false;
-            return this.findElementAnywhere(selectorOriginal, textOriginal, 0, -1);
+            return this.findElementAnywhere(selectorOriginal, textOriginal, 0, ignoreVisibility, noDigging, -1);
         }
         // trying to find it again without translation if it was
-        if (-2 !== startTime && (this.dictionary.hasOwnProperty(this.lang) || 0 < Object.keys(this.dictionary).length)) {
+        if (!noDigging && -2 !== startTime && (this.dictionary.hasOwnProperty(this.lang) || 0 < Object.keys(this.dictionary).length)) {
             console.info(`Trying to translate or not translate`);
-            return this.findElementAnywhere(selectorOriginal, textOriginal, 0, ignoreVisibility, -2);
+            return this.findElementAnywhere(selectorOriginal, textOriginal, 0, ignoreVisibility, noDigging, -2);
         }
 
         return {
@@ -730,7 +730,7 @@ export default class ImposterClass {
             } else {
                 console.error('UNKNOWN ERROR', e);
                 await this.wait(0.1);
-                return await this.findElementAnywhere(selector, text, timeout, startTime);
+                return await this.findElementAnywhere(selector, text, timeout, ignoreVisibility, noDigging, startTime);
             }
         }
     }
