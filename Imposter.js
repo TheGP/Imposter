@@ -444,7 +444,7 @@ export default class ImposterClass {
     // gets attribute or value of element, which can be on the page or iframe
     async getAttribute(selector, attribute_name) {
         const { el, target } = ('string' == typeof selector)
-                                    ? await this.findElementAnywhere(selector)
+                                    ? await this.findElementAnywhere(selector, null, 1, true, true)
                                     : selector;
         
         if (el) {
@@ -512,7 +512,7 @@ export default class ImposterClass {
 
     async waitForDissapear(selector, text = null, timeout = 50, startTime = Date.now()) {
 
-        const { el, target, type } = await this.findElementAnywhere(selector, text, 0.1);
+        const { el, target, type } = await this.findElementAnywhere(selector, text, 0.1, true, true);
 
         if (el && el.asElement()) {
             //console.log('el=', el, el.asElement())
