@@ -236,11 +236,85 @@ export default class ImposterClass {
                 await this.page.keyboard.up('ControlLeft');
                 await this.waitRandom(0.7, 1.2);
             }
+        } else {
+            // ::TODO:: make sure that cursor at the end of the existing text
         }
 
         await this.typeSimple(el, string)
+
+        if (!keepExistingText) {
+            const value = await this.getAttribute({el : el, target: target}, `value`);
+            if (value !== string) {
+                console.warn(`For some reason there are mistakes in typed data, fixing`);
+                await this.typeFixMistake(el, target, string, value);
+            }
+        }
+
         await this.cursor.toggleRandomMove(true)
     }
+
+
+    // Fixes typed mistake by moving cursor and typing missing symbols
+    // ::TODO:: make cursor moving quicker if its far from mistake placement
+    async typeFixMistake(el, target, shouldbeValue, currentValue, attempt = 0) {
+        console.log('shouldbeValue', shouldbeValue, 'currentValue', currentValue);
+
+        // Find first difference
+        let diffIndex = 0;
+        while (currentValue[diffIndex] === shouldbeValue[diffIndex]) {
+            diffIndex++;
+        }
+
+        // Find the current cursor position
+        let cursorPosition = await target.evaluate(el => el.selectionStart, el);
+        
+        // Move cursor to the right position using arrow keys
+        let arrowKeyCount = diffIndex - cursorPosition;
+        if (arrowKeyCount > 0) {
+            if (0 !== attempt) {
+                await this.waitRandom(0.7, 2);
+            }
+            for (let i = 0; i < arrowKeyCount; i++) {
+                await target.keyboard.press('ArrowRight');
+                await this.waitRandom(0.5, 0.2);
+            }
+        } else if (arrowKeyCount < 0) {
+            if (0 !== attempt) {
+                await this.waitRandom(0.7, 2);
+            }
+            for (let i = 0; i < -arrowKeyCount; i++) {
+                await this.page.keyboard.press('ArrowLeft');
+                await this.waitRandom(0.05, 0.2);
+            }
+        }
+
+        // Remove extra symbol if the next one is correct
+        //console.log(currentValue[diffIndex + 1], '===', shouldbeValue[diffIndex]);
+        if (currentValue[diffIndex + 1] === shouldbeValue[diffIndex] || 'undefined' === typeof shouldbeValue[diffIndex]) {
+            if (this.chance(70)) {
+                await this.page.keyboard.press('ArrowRight');
+                await this.waitRandom(0.3, 1.5);
+                await this.page.keyboard.press('Backspace');
+            } else {
+                await this.page.keyboard.press('Delete');
+            }
+        } else {
+            // Type the missing symbol
+            const symbolToAdd = shouldbeValue[diffIndex];
+            //console.log('symbolToAdd', symbolToAdd, shouldbeValue, diffIndex);
+            await this.waitRandom(0.3, 1.5);
+            await this.typeSimple(el, symbolToAdd);
+        }
+
+        // Update currentValue after fixing the mistake
+        currentValue = await this.getAttribute({el : el, target: target}, `value`);
+
+        // Check if there are more mistakes left
+        if (currentValue !== shouldbeValue) {
+            await this.typeFixMistake(el, target, shouldbeValue, currentValue, ++attempt);
+        }
+    }
+
 
     // Navigating + Clicking on an element, text inside of the element is optional, supports inner html <button><span>Submit
     // ::TODO:: different text match options?
