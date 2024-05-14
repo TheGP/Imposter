@@ -189,7 +189,7 @@ export default class ImposterClass {
     async type(selector, string, keepExistingText = false) {
         if ('object' === typeof selector && selector instanceof Promise) selector = await selector;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
         this.recordAction('type', [ selector, string, keepExistingText ]);
-        await this.waitRandom(0.6, 2);
+        await this.waitTillHTMLRendered(2);
         string = String(string);
 
         console.log('type to', selector, string);
@@ -330,7 +330,7 @@ export default class ImposterClass {
         if ('object' === typeof selectorOrObj && selectorOrObj instanceof Promise) selectorOrObj = await selectorOrObj;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
         this.recordAction('click', [ selectorOrObj, text, timeout ]);
 
-        await this.waitRandom(0.2, 1.2);
+        await this.waitRandom(0.1, 0.7);
         //await this.waitForNetworkIdle(1);
         //console.log('wait for', selectorOrObj)
         //if ('string' == typeof selectorOrObj) await this.page.waitForSelector(selectorOrObj, { timeout: timeout });
@@ -539,8 +539,8 @@ export default class ImposterClass {
     }
 
     // is there the element anywhere on the page / frame?
-    async isThere(selector, text = null, timeout = 1) {
-        await this.waitTillHTMLRendered(2);
+    async isThere(selector, text = null, timeout = 0.1) {
+        await this.waitTillHTMLRendered();
 
         const { el, target } = await this.findElementAnywhere(selector, text, timeout, false, true);
         return (el && el.asElement()) ? true : false;
