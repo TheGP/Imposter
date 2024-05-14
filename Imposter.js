@@ -210,6 +210,12 @@ export default class ImposterClass {
             return document.activeElement === el;
         }, el);
 
+        const value = await this.getAttribute({el : el, target: target}, `value`);
+        if (value === string) {
+            // If text is the same we trying to type - skipping typing
+            return;
+        }
+
         // If focused do not click the element with chance of 30%
         if (!isInputFocused || (isInputFocused && this.chance(this.behavior.noticing_focus))) {
             await this.clickSimple(el)
@@ -218,7 +224,6 @@ export default class ImposterClass {
 
         // Removing text from the input if it exists
         if (!keepExistingText) {
-            const value = await this.getAttribute({el : el, target: target}, `value`);
             console.info('current input value=', value);
             if ('' !== value) {
                 await this.waitRandom(0.5, 0.9);
