@@ -222,15 +222,16 @@ export default class ImposterClass {
         }
         await this.cursor.toggleRandomMove(false)
 
-        // If text is partly typed already - just using fixing mistake to add missing text
-        if (0 === string.indexOf(value)) {
-            return await this.typeFixMistake(el, target, string, value);
-        }
-
         // Removing text from the input if it exists
         if (!keepExistingText) {
             console.info('current input value=', value);
-            if ('' !== value) {
+
+            // If text is partly typed already - just using fixing mistake to add missing text
+            if (0 === string.indexOf(value) && '' !== value) {
+                await this.typeFixMistake(el, target, string, value);
+                await this.cursor.toggleRandomMove(true)
+                return;
+            } else if ('' !== value) {
                 await this.waitRandom(0.5, 0.9);
                 await this.page.keyboard.down('ControlLeft');
                 await this.waitRandom(0.1, 0.3);
