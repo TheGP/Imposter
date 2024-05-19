@@ -263,7 +263,7 @@ export default class ImposterClass {
     // Fixes typed mistake by moving cursor and typing missing symbols
     // ::TODO:: make cursor moving quicker if its far from mistake placement
     async typeFixMistake(el, target, shouldbeValue, currentValue, attempt = 0) {
-        console.log('shouldbeValue', shouldbeValue, 'currentValue', currentValue);
+        console.info('shouldbeValue', shouldbeValue, 'currentValue', currentValue);
 
         // Find first difference
         let diffIndex = 0;
@@ -272,10 +272,31 @@ export default class ImposterClass {
         }
 
         // Find the current cursor position
-        let cursorPosition = await target.evaluate(el => el.selectionStart, el);
+        let cursorPosition = null;
+        const startTime = Date.now();
+        const stopInMilliseconds = 5 * 1000;
+        while (null === cursorPosition) {
+            cursorPosition = await target.evaluate(el => el.selectionStart, el);
+            // In case no cursor inside the field for some reason, focusing it
+            if (null === cursorPosition) {
+                console.info(`cursorPosition`, cursorPosition);
+                await target.evaluate(el => el.focus(), el);
+                await this.wait(0.3);
+                if (stopInMilliseconds <= Date.now() - startTime) {
+                    console.log(`Breaking loop because focusing field failed`);
+                    await target.evaluate((el, target) => {
+                        console.log(`Failed to focus el`, el);
+                        console.log(`Failed to focus target`, target);
+                    }, el, target);
+                    break;
+                }
+            }
+        }
+        console.info('cursorPosition', cursorPosition);
         
         // Move cursor to the right position using arrow keys
         let arrowKeyCount = diffIndex - cursorPosition;
+        console.info(`arrowKeyCount=`, arrowKeyCount, `diffIndex=`, diffIndex, `cursorPosition`, cursorPosition);
         if (arrowKeyCount > 0) {
             if (0 !== attempt) {
                 await this.waitRandom(0.7, 2);
@@ -295,7 +316,7 @@ export default class ImposterClass {
         }
 
         // Remove extra symbol if the next one is correct
-        //console.log(currentValue[diffIndex + 1], '===', shouldbeValue[diffIndex]);
+        //console.info(currentValue[diffIndex + 1], '===', shouldbeValue[diffIndex]);
         if (currentValue[diffIndex + 1] === shouldbeValue[diffIndex] || 'undefined' === typeof shouldbeValue[diffIndex]) {
             if (this.chance(70)) {
                 await this.page.keyboard.press('ArrowRight');
