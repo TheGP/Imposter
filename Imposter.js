@@ -357,6 +357,7 @@ export default class ImposterClass {
     // ::TODO:: stop random mouse movements right after the click option (for clicking on select etc)
     async click(selectorOrObj, text = null, timeout = 10) {
         console.log('click', selectorOrObj, text);
+        await this.waitTillHTMLRendered();
         if ('object' === typeof selectorOrObj && selectorOrObj instanceof Promise) selectorOrObj = await selectorOrObj;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
         this.recordAction('click', [ selectorOrObj, text, timeout ]);
 
