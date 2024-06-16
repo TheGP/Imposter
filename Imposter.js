@@ -522,9 +522,12 @@ export default class ImposterClass {
         delete this.cursor;
         // Safely closing the tab
         await this.page.close()
+        this.page = null;
 
-        if (attach) {
-            await this.attachToActiveTab();
+        try {
+            await this.attachToActiveTab(true);
+        } catch (e) {
+            console.error(e);
         }
     }
 
@@ -532,6 +535,9 @@ export default class ImposterClass {
     async close(ms) {
         await this.closeTab(false);
         await this.browser.close()
+        this.cursor = null;
+        this.browser = null;
+        this.page = null;
     }
 
     // ::TODO:: skip if selected value is correct already
