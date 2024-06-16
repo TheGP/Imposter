@@ -205,7 +205,7 @@ If you don't need check element with `isThere` but want to use blocks, it does t
 
 Dummy method to skip execution of the block, just add S.
 
-### ▶ findChildEl(elObjOrSelector: string | object, selectorChild: string, textChild: string | null = null): Promise<object>`
+### ▶ findChildEl(elObjOrSelector: string | object, selectorChild: string, textChild: string | null = null): Promise<object>
 
 Finds a child element within a given parent element or selector.
 
@@ -231,7 +231,7 @@ await i.findElNearBy(`label`, `Name`, `div`, `input`);
 - **`parent`** (`ElementHandle | null`, optional): Optional parent element within which to search.
 - **`except`** (`Array<Element>`, optional): Array of elements to exclude from selection.
 
-Returns a random element matching the specified selector, optionally within a parent element, excluding specified elements. Basically, you can click random elements, collect it and pass it as `except` variable so next random click won`t be on the same element.
+Returns a random element matching the specified selector, optionally within a parent element, excluding specified elements. Basically, you can click random elements, collect it and pass it as `except` variable so next random click won't be on the same element.
 
 ### ▶ findFirstElementOnScreen(selector: string): Promise<object>
 
