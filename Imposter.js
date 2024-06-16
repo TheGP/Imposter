@@ -574,13 +574,95 @@ export default class ImposterClass {
         return false;
     }
 
+    
     // is there the element anywhere on the page / frame?
-    async isThere(selector, text = null, timeout = 0.1) {
+    async isThere(selector, text = null, timeout = 0, cbTrue = null, cbElse = null) {
         await this.waitTillHTMLRendered();
 
+        let cb = null;
+        if ('function' === typeof text) {
+            cb = text;
+            text = null;
+        } else if ('function' === typeof timeout) {
+            cb = timeout;
+            timeout = 0.1;
+        } else if ('function' === typeof cbTrue) {
+            cb = cbTrue;
+            cbTrue = null
+        }
+
+        let cb2 = null;
+        if ('function' === typeof timeout) {
+            cb2 = timeout;
+            timeout = 0.1;
+        } else if ('function' === typeof cbTrue) {
+            cb2 = cbTrue;
+            cbTrue = null;
+        } else if ('function' === typeof cbElse) {
+            cb2 = cbElse;
+            cbElse = null;
+        } 
+
+        console.info('->', [ selector, text, timeout, cb, cb2 ]);
+
+        const actionsHistoryRecordingPrev = this.actionsHistoryRecording;
+        if (cb) {
+            this.recordAction('isThere', [ selector, text, timeout, cb, cb2 ]);
+            this.actionsHistoryRecording = false;
+        }
+
         const { el, target } = await this.findElementAnywhere(selector, text, timeout, false, true);
-        return (el && el.asElement()) ? true : false;
+        const isThere = (el && el.asElement()) ? true : false;
+        console.info(`isThere`, isThere);
+        
+        if (cb || cb2) {
+            if (isThere) {
+                cb && await cb();
+            } else {
+                cb2 && await cb2();
+            }
+            if (!actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
+                this.actionsHistoryRecording = true;
+            }
+        }
+        return isThere;
     }
+
+    
+    // Dummy block just add S befpre "block" to skip it
+    async Sblock(selector, text = null, timeout = 0.1) {
+        return;
+    }
+
+
+    async block(selector, text = null, timeout = 0.1, cb = null) {
+        this.recordAction('block', [ selector, text, timeout, cb ]);
+        const actionsHistoryRecordingPrev = this.actionsHistoryRecording;
+        this.actionsHistoryRecording = false;
+
+        cb = ('function' === typeof cb) ? cb : 
+                    ('function' === typeof selector) ? selector :
+                        ('function' === typeof text) ? text :
+                            ('function' === typeof timeout) ? timeout : null;
+
+        selector = ('function' === typeof selector) ? null : selector;
+        text = ('function' === typeof text) ? null : text;
+        timeout = ('function' === typeof timeout) ? null : timeout;
+
+        let res = true;
+        // if there is a condition - checking it
+        if (selector) {
+            res = await this.isThere(selector, text, timeout);
+        }
+
+        if (res) {
+            cb();
+        }
+        if (!actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
+            this.actionsHistoryRecording = true;
+        }
+    }
+
 
     async getInnerText(selector, text = null, timeout = 10) {
         const { el, target } = await this.findElementAnywhere(selector, text, 1);
