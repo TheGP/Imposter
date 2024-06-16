@@ -117,27 +117,35 @@ export default class ImposterClass {
     }
 
     // Finds the active tab and prepares it for work
-    async attachToActiveTab(debug = false) {
+    // failEasy - if true will expect it will be no active tabs available, and wont try to fix the problem
+    async attachToActiveTab(failEasy = false, sec = 0) {
+        console.info(`attachToActiveTab`);
         const pages = await this.browser.pages();
         // this will return list of active tab (which is pages object in puppeteer)
         const visiblePages = await filter(pages, async (p) => {
             const state = await p.evaluate(() => document.visibilityState);
-            if (debug) {
-                console.info('page=', p.url(), 'state=', state);
-            }
+            //console.info('page=', p.url(), 'state=', state);
             return (state === 'visible' && !p.url().startsWith('devtools://')); //
         });
-        console.info('visiblePages', visiblePages)
+        //console.info('visiblePages', JSON.stringify(visiblePages))
         const activeTab = visiblePages[0];
 
-        if (!activeTab) {
+        if (!activeTab && !failEasy) {
+            // waiting 30 sec for active tab to appear (because link opened in new tab can be not detected before connecting to the website)
+            if (sec < 30) {
+                await this.wait(1);
+                return this.attachToActiveTab(failEasy, ++sec);
+            }
+            console.info(`New page because of no active tab`);
             await this.newPage();
-            return this.attachToActiveTab(debug);
+            return this.attachToActiveTab();
         }
 
-        console.info('activeTab', activeTab.url())
-        this.page = activeTab;
-        await this.attachAllToPage();
+        if (activeTab) {
+            console.info('activeTab', activeTab.url())
+            this.page = activeTab;
+            await this.attachAllToPage();
+        }
     }
 
     // Attaches all needed helpers to the page
