@@ -630,16 +630,18 @@ export default class ImposterClass {
         return (res.asElement()) ? res : null;
     }
 
-    async waitForDissapear(selector, text = null, timeout = 50, startTime = Date.now()) {
 
-        const { el, target, type } = await this.findElementAnywhere(selector, text, 0.1, true, true);
+    // Waits for the element to dissapear from DOM (with ignoreVisibility = false disspear visually)
+    async waitForDissapear(selector, text = null, ignoreVisibility = true, timeout = 120, startTime = Date.now()) {
+
+        const { el, target, type } = await this.findElementAnywhere(selector, text, 0, ignoreVisibility, true);
 
         if (el && el.asElement()) {
             //console.log('el=', el, el.asElement())
             // trying again in 1 sec if time out is not yet reached
             if (Date.now() <= startTime + timeout * 1000) {
                 await this.wait(1);
-                return this.waitForDissapear(selector, text, timeout, startTime);
+                return this.waitForDissapear(selector, text, ignoreVisibility, timeout, startTime);
             }
             return false;
         } else {
