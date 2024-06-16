@@ -199,7 +199,7 @@ Checks if the specified element is present on the page. If cbTrue / cbElse will 
 
 ### ▶ block(selector: string | null = null, text: string | null = null, timeout: number | null = 0.1, cb: Function | null = null): Promise<void>
 
-If you don`t need check element with `isThere` but want to use blocks, it does the same but without check.
+If you don't need check element with `isThere` but want to use blocks, it does the same but without check.
 
 ### ▶ Sblock(selector: string, text: string | null = null, timeout: number = 0.1): Promise<void>
 
