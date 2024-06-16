@@ -715,32 +715,29 @@ export default class ImposterClass {
 
             const els = Array.from(document.querySelectorAll(selector));
 
-            if (text) {
-                text = String(text);
+            //if (text) {
+                if (text) {
+                    text = String(text);
+                }
+
                 const res = els.find(el => {
                     // checking if the element is visible, otherwise user cant click it anyway
-                    console.log(
-                        el.textContent.trim().toLowerCase(), 
-                        'searching for=', 
-                        text.toLowerCase(), 
-                        el.textContent.trim().toLowerCase().includes(text.toLowerCase()),
-                    );
+                    if (text) {
+                        console.log(
+                            el.textContent.trim().toLowerCase(), 
+                            'searching for=', 
+                            text.toLowerCase(), 
+                            el.textContent.trim().toLowerCase().includes(text.toLowerCase()),
+                        );
+                    }
                     
                     const isVisible = visibilityCheck(el);
-                    return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
+                    const hasText = (text) ? el.textContent.trim().toLowerCase().includes(text.toLowerCase()) : true;
+                    console.log('isVisible', isVisible, 'hasText', hasText);
+                    return isVisible && hasText;
                 });
                 console.log('RES=', res);
                 return res;
-            } else {
-                const el = els[0];
-
-                if (el) {
-                    const isVisible = visibilityCheck(el);
-                    return (isVisible) ? el : null;
-                }
-
-                return el;
-            }
         }, ignoreVisibility, selector, text);
 
         if (el.asElement()) {
@@ -783,28 +780,24 @@ export default class ImposterClass {
                     const els = Array.from(document.querySelectorAll(selector));
                     if (text) {
                         text = String(text);
-                        return els.find(el => {
+                    }
+
+                    return els.find(el => {
+                        if (text) {
                             console.log(
                                 el.textContent.trim().toLowerCase(), 
                                 'searching for=', 
                                 text.toLowerCase(), 
                                 el.textContent.trim().toLowerCase().includes(text.toLowerCase())
                             );
-
-                            //console.log('el', el, el.textContent.trim().toLowerCase())
-                            const isVisible = visibilityCheck(el);
-                            return isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase())
-                        });
-                    } else {
-                        const el = els[0];
-
-                        if (el) {
-                            const isVisible = visibilityCheck(el);
-                            return (isVisible) ? el : null;
                         }
-        
-                        return el;
-                    }
+
+                        //console.log('el', el, el.textContent.trim().toLowerCase())
+                        const isVisible = visibilityCheck(el);
+                        const hasText = (text) ? el.textContent.trim().toLowerCase().includes(text.toLowerCase()) : true;
+                        console.log('isVisible', isVisible, 'hasText', hasText);
+                        return isVisible && hasText;
+                    });
                 }, ignoreVisibility, selector, text);
 
                 if (el.asElement()) {
