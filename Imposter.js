@@ -882,9 +882,18 @@ export default class ImposterClass {
     // el = selector | element{}
     // finds child of the element
     async findChildEl(elObjOrSelector, selectorChild, textChild = null) {
+        textChild = this.translate(textChild);
         const { el, target } = ('object' === typeof elObjOrSelector) 
-                                    ? elObjOrSelector 
+                                    ? (elObjOrSelector.hasOwnProperty('target') ? elObjOrSelector : {el: elObjOrSelector, target: this.page})
                                     : await this.findElementAnywhere(elObjOrSelector);
+
+        if (!el) {
+            return {
+                el: false,
+                target: false,
+                type: 'page',
+            }
+        }
 
         const res = await target.evaluateHandle((parent, selector, text) => {
 
