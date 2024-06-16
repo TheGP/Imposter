@@ -1001,8 +1001,8 @@ export default class ImposterClass {
 
     // Checks if element if in the view and gives directions where to scroll
     // ::TODO:: support of horizonal
-    async isElementInView(selector, target = this.page) {
-        console.info('isElementInView', selector);
+    async isElementInView(selector, target = this.page, attempt = 0) {
+        //console.info('isElementInView', selector);
         const elementHandle = ('string' === typeof selector)
                                     ? await target.$(selector)
                                     : selector;
@@ -1013,35 +1013,45 @@ export default class ImposterClass {
         }
 
         // ::TRICKY:: do not use puppeteer's function as it calculates y for a whole page, not iframe only
-        const boundingBox = await target.evaluate(element => {
-            console.info(`Getting getBoundingClientRect of:`, element);
-            console.info(element,  element.getBoundingClientRect());
-            return JSON.parse(JSON.stringify(element.getBoundingClientRect()))
-        }, elementHandle);
-      
-        if (!boundingBox) {
-            console.error(`Could not retrieve bounding box for element with selector "${selector}".`);
-            return false;
+        try {
+            const boundingBox = await target.evaluate(element => {
+                console.info(`Getting getBoundingClientRect of:`, element, element.getBoundingClientRect());
+                return JSON.parse(JSON.stringify(element.getBoundingClientRect()))
+            }, elementHandle);
+          
+            if (!boundingBox) {
+                console.error(`Could not retrieve bounding box for element with selector "${selector}".`);
+                return false;
+            }
+            const viewportHeight = await target.evaluate(() => {
+                return window.innerHeight;
+            });
+    
+            // Check if the element is in the viewport
+            const isInView = (
+                boundingBox.x >= 0 &&
+                boundingBox.y >= 0 &&
+                boundingBox.y + boundingBox.height <= viewportHeight || ((boundingBox.y + boundingBox.height - viewportHeight) <= 0.2 * viewportHeight) // if its 80% in the view or more, lets count its in the view (linked in "next" button at the end of sign up fails because cant scroll it)
+            );
+    
+            //console.log('!!!!', boundingBox.y + boundingBox.height, viewportHeight);
+            //console.log('boundingBox.y', boundingBox.y, 'page height:', viewportHeight);
+    
+            // Determine the direction
+            const direction = boundingBox.y + boundingBox.height < (viewportHeight / 2) ? 'up' : 'down';
+    
+            //console.log(elementHandle, direction);
+            return { isInView: isInView, direction: direction };
+        } catch (e) {
+            console.error(`isElementInView error:`, e);
+            if (attempt < 10) {
+                await this.wait(0.1);
+                return this.isElementInView(selector, target, ++attempt);
+            } else {
+                throw e;
+            }
         }
-        const viewportHeight = await target.evaluate(() => {
-            return window.innerHeight;
-        });
 
-        // Check if the element is in the viewport
-        const isInView = (
-            boundingBox.x >= 0 &&
-            boundingBox.y >= 0 &&
-            boundingBox.y + boundingBox.height <= viewportHeight || ((boundingBox.y + boundingBox.height - viewportHeight) <= 0.2 * viewportHeight) // if its 80% in the view or more, lets count its in the view (linked in "next" button at the end of sign up fails because cant scroll it)
-        );
-
-        //console.log('!!!!', boundingBox.y + boundingBox.height, viewportHeight);
-        //console.log('boundingBox.y', boundingBox.y, 'page height:', viewportHeight);
-
-        // Determine the direction
-        const direction = boundingBox.y + boundingBox.height < (viewportHeight / 2) ? 'up' : 'down';
-
-        //console.log(elementHandle, direction);
-        return { isInView: isInView, direction: direction };
     }
 
 
