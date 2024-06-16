@@ -1402,7 +1402,7 @@ export default class ImposterClass {
         }
 
         if (2 <= this.actionsHistory.length) {
-            console.warn('Repeating previous action...');
+            console.warn('Repeating previous action...', this.actionsHistoryRecording);
             this.actionsHistoryRecording = false;
             // repeating previous action
             let action =  this.actionsHistory[this.actionsHistory.length - 2];
@@ -1475,7 +1475,7 @@ export default class ImposterClass {
     tryTranslate(string) {
         if ('string' !== typeof string) return string;
 
-        console.info('tryTranslate', string);
+        //console.info('tryTranslate', string);
 
         if (this.dictionary.hasOwnProperty(this.lang)) {
             for (const key in this.dictionary[this.lang]) {
