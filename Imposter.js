@@ -1200,6 +1200,54 @@ export default class ImposterClass {
         //console.log('waitTillHTMLRendered');
 
         try {
+            let readyState = await this.page.evaluate(() => {
+                return document.readyState;
+            });
+            console.info(`readyState=`, readyState);
+
+            /*
+            const iframeReadyStates = await this.page.evaluate(() => {
+                return Array.from(document.querySelectorAll('iframe')).map(iframe => {
+                    try {
+                        return iframe.contentDocument.readyState;
+                    } catch (e) {
+                        // If iframe is cross-origin, catch the error and return 'cross-origin'
+                        //return 'cross-origin';
+                    }
+                });
+            });
+            console.log(`readyState Iframes=`, JSON.stringify(iframeReadyStates));
+            */
+
+            if ('loading' === readyState) {
+                while ('loading' === readyState) {
+                    readyState = await this.page.evaluate(() => {
+                        return document.readyState;
+                    });
+                    await this.wait(0.3);
+                    //console.log(`Waiting for readyState to be interactive, now =`, readyState);
+                }
+    
+                if ('interactive' === readyState) {
+                    // holding for 1 more sec and then releasing
+                    console.info(`readyState became interactive`);
+                    return await this.wait(1);
+                } else {
+                    // if "complete" then releasing right away
+                    console.info(`readyState became complete`);
+                    return true;
+                }
+            }
+        } catch (e) {
+            if (e.toString().includes('Execution context was destroyed')) {
+                console.warn('context error, restarting...')
+                return this.waitTillHTMLRendered(minStableSizeIterations, timeout);
+            }
+        }
+
+        return;
+
+        try {
             const checkDurationMsecs = 0.7;
             const maxChecks = timeout / checkDurationMsecs;
             let lastHTMLSize = 0;
