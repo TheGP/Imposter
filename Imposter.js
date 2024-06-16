@@ -419,8 +419,9 @@ export default class ImposterClass {
         }
 
         await this.clickSimple(el);
-        
         await this.waitTillHTMLRendered();
+
+        return el;
     }
 
     // Clicks on random element
