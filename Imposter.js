@@ -280,6 +280,26 @@ export default class ImposterClass {
         }
 
         // Find the current cursor position
+        const type = await el.evaluate(element => element.getAttribute('type'));
+        // Number type doesnt allow to get cursor position, so we just replacing whole text
+        if ('number' === type) {
+            // Focusing
+            await target.evaluate(el => el.focus(), el);
+            // Deleting all text
+            await target.keyboard.down('Control');
+            await target.keyboard.press('KeyA'); // Select all text
+            await target.keyboard.up('Control');
+            await target.keyboard.press('Backspace'); // Delete selected text
+            // Setting value of the clipboard
+            await target.page.evaluate((value) => {
+                navigator.clipboard.writeText(value);
+            }, shouldbeValue);
+            // Pasting it
+            await target.page.keyboard.down('Control');
+            await target.page.keyboard.press('KeyV');
+            await target.page.keyboard.up('Control');
+            return;
+        }
         let cursorPosition = null;
         const startTime = Date.now();
         const stopInMilliseconds = 5 * 1000;
@@ -288,7 +308,8 @@ export default class ImposterClass {
             // In case no cursor inside the field for some reason, focusing it
             if (null === cursorPosition) {
                 console.info(`cursorPosition`, cursorPosition);
-                await target.evaluate(el => el.focus(), el);
+                //await target.evaluate(el => el.focus(), el);
+                await this.clickSimple(el);
                 await this.wait(0.3);
                 if (stopInMilliseconds <= Date.now() - startTime) {
                     console.log(`Breaking loop because focusing field failed`);
