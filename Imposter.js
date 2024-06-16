@@ -700,7 +700,7 @@ export default class ImposterClass {
                     el.offsetWidth > 0 && el.offsetHeight > 0);
 
                     const res = isVisible && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
-                    console.log('getChildEl', res, 'visible:', isVisible, 'el text:', el.textContent.trim().toLowerCase(), 'searching for:', text.toLowerCase());
+                    console.log('getChildEl', el, 'res:', res, 'visible:', isVisible, 'el text:', el.textContent.trim().toLowerCase(), 'searching for:', text.toLowerCase(), 'has text=', el.textContent.trim().toLowerCase().includes(text.toLowerCase()));
                     return res;
                 });
             } else {
