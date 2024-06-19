@@ -376,7 +376,7 @@ export default class ImposterClass {
     // ::TODO:: different text match options?
     // ::TODO:: scroll properly divs without scrollIntoView
     // ::TODO:: stop random mouse movements right after the click option (for clicking on select etc)
-    async click(selectorOrObj, text = null, timeout = 10) {
+    async click(selectorOrObj, text = null, timeout = 10, attempt = 1) {
         console.log('click', selectorOrObj, text);
         await this.waitTillHTMLRendered();
         if ('object' === typeof selectorOrObj && selectorOrObj instanceof Promise) selectorOrObj = await selectorOrObj;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
@@ -440,7 +440,17 @@ export default class ImposterClass {
             return await this.click(selectorOrObj, text, timeout);
         }
 
-        await this.clickSimple(el);
+        try {
+            await this.clickSimple(el);
+        } catch (e) {
+            if (e.message.includes('Could not mouse-over element within enough tries') && attempt < 3) {
+                console.log(`Error "Could not mouse-over element within enough tries" detected, refreshing element, attempt=`, attempt);
+                return this.click(selectorOrObj, text, timeout, ++attempt)
+            } else {
+                throw e;
+            }
+        }
+
         await this.waitTillHTMLRendered();
 
         return el;
@@ -453,11 +463,15 @@ export default class ImposterClass {
 
     // Clicking on an element
     async clickSimple(selectorOrObject, attempt = 0) {
+        await this.cursor.click(selectorOrObject, {
+            hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
+            waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
+        })
+        //console.log('Clicked!', selectorOrObject);
+
+        /*
         try {
-            await this.cursor.click(selectorOrObject, {
-                hesitate: this.random(this.behavior.mouse.hesitation.min, this.behavior.mouse.hesitation.max),
-                waitForClick: this.random(this.behavior.mouse.release.min, this.behavior.mouse.release.max),
-            })
+
         } catch (e) {
             console.error(`this.cursor.click error:`, e);
             await this.page.evaluate((selectorOrObject) => {
@@ -470,7 +484,7 @@ export default class ImposterClass {
             } else {
                 throw `this.cursor.click error`;
             }
-        }
+        }*/
     }
 
     // Just typing into element
