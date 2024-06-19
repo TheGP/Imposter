@@ -599,10 +599,10 @@ export default class ImposterClass {
     }
 
     // gets attribute or value of element, which can be on the page or iframe
-    async getAttribute(selector, attribute_name) {
-        const { el, target } = ('string' == typeof selector)
-                                    ? await this.findElementAnywhere(selector, null, 1, true, true)
-                                    : selector;
+    async getAttribute(elObjOrSelector, attribute_name) {
+        const { el, target } = ('string' == typeof elObjOrSelector)
+                                    ? await this.findElementAnywhere(elObjOrSelector, null, 1, true, true)
+                                    : (elObjOrSelector.hasOwnProperty('target') ? elObjOrSelector : {el: elObjOrSelector, target: this.page});
         
         if (el) {
             return this.getAttributeSimple(el, attribute_name, target);
