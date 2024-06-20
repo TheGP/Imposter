@@ -1,6 +1,7 @@
 import { typeInto } from "./puppeteer-humanize/lib/index.js"
 import puppeteer from "puppeteer"
-import pkg from './ghost-cursor/lib/spoof.js';
+//import pkg from './ghost-cursor/lib/spoof.js';
+import pkg from 'ghost-cursor';
 const { createCursor, getRandomPagePoint, installMouseHelper } = pkg;
 import { humanScroll } from "./ghost-scroll/ghost-scroll.mjs"
 
@@ -1236,7 +1237,7 @@ export default class ImposterClass {
             throw new Error('Page is not initialized. Call launch() first.')
         }
 
-        let lastMousePosition = this.cursor.getPrevious();
+        let lastMousePosition = this.cursor.getLocation();
 
         options = { ...options, debug: true, fadeDuration: 800 }
 

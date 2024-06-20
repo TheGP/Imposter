@@ -41,10 +41,6 @@ npm i -g pnpm
 pnpm install
 npm run build
 cd ..
-cd ghost-cursor
-npm i
-npm run build
-cd ..
 cd ghost-scroll
 npm i
 ```

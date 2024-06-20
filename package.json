@@ -2,9 +2,10 @@
   "type": "module",
   "scripts": {
     "start": "node app.js",
-    "test" : "node --experimental-vm-modules node_modules/jest/bin/jest.js test.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js test.js"
   },
   "dependencies": {
+    "ghost-cursor": "^1.3.0",
     "puppeteer": "^22.1.0"
   },
   "devDependencies": {
