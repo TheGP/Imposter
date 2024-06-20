@@ -654,9 +654,13 @@ export default class ImposterClass {
         
         if (cb || cb2) {
             if (isThere) {
-                cb && await cb();
+                if (cb) {
+                    return await cb();
+                }
             } else {
-                cb2 && await cb2();
+                if (cb2) {
+                    return await cb2();
+                }
             }
             if (!actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
                 this.actionsHistoryRecording = true;
@@ -672,6 +676,8 @@ export default class ImposterClass {
     }
 
 
+    // Block to combine multiple actions to one in order to properly replay it
+    // Passes the result of callback back
     async block(selector, text = null, timeout = 0.1, cb = null) {
         this.recordAction('block', [ selector, text, timeout, cb ]);
         const actionsHistoryRecordingPrev = this.actionsHistoryRecording;
@@ -693,7 +699,7 @@ export default class ImposterClass {
         }
 
         if (res) {
-            cb();
+            return cb();
         }
         if (!actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
             this.actionsHistoryRecording = true;
