@@ -206,7 +206,11 @@ export default class ImposterClass {
         
         try {
             if (url !== this.page.url()) { // Opening url if its not the correct one already
-                const options = (referer) ? { referer: referer } : {};
+                //await this.page.setBypassCSP(true);
+                let options = { timeout: 500 * 1000 };
+                if (referer) {
+                    options.referer = referer
+                }
                 await this.page.goto(url, options);
             }
         } catch (error) {
