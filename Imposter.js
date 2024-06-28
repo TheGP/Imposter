@@ -1446,6 +1446,31 @@ export default class ImposterClass {
     }
 
 
+    // Check if there iframe with specified url
+    async isThereIframe(url, timeout = 0, startTime = Date.now()) {
+        await this.waitTillHTMLRendered();
+        const frameUrls = this.page.frames()
+            .filter(frame => frame !== this.page.mainFrame())
+            .map(frame => frame.url());
+
+        console.log(`frameUrls=`, frameUrls);
+
+        if (typeof url === 'string') {
+            return frameUrls.includes(url);
+        } else if (url instanceof RegExp) {
+            return frameUrls.some(frameUrl => url.test(frameUrl));
+        }
+
+        // If not yet time - trying again in 0.5 sec
+        if (Date.now() <= startTime + timeout * 1000) {
+            await this.wait(500);
+            return this.isThereIframe(url, timeout, startTime);
+        }
+
+        return false;
+    }
+
+
     activateCache = async () => {
         return;
         if (!this.cache) return;
