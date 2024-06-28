@@ -1626,6 +1626,11 @@ export default class ImposterClass {
         return this.randomInteger(min, max, except);
     }
 
+    // Random element from the array
+    randEl(els = []) {
+        return els[Math.floor(Math.random() * els.length)];
+    }
+
     // Wait random times
     async waitRandom(min, max) {
         const randomDelay = this.random(min, max);
