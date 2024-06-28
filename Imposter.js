@@ -1222,7 +1222,7 @@ export default class ImposterClass {
     top is not visible:   b height 172.859375 b top -10.765625 b bottom 162.09375 pageYOffset 2414
     bottom is not visible b height 172.859375 b top 789.234375 b bottom 962.09375 pageYOffset 1614
     */
-    async findFirstElementOnScreen(selector) {
+    async findFirstElementOnScreen(selector, attempt = 0) {
         const elsHandles = await this.page.$$(selector);
         const els = [];
         for (let elementHandle of elsHandles) {
@@ -1248,13 +1248,21 @@ export default class ImposterClass {
             };
             els.push(el);
         }
-        
-        const foundEls = els.filter(el => el !== null);
-        const mostVisibleEl = foundEls.reduce((acc, curr) => curr.visible > acc.visible ? curr : acc);
-
-        console.info('mostVisibleEl:', mostVisibleEl);
-        return mostVisibleEl.el;
+        try {
+            const foundEls = els.filter(el => el !== null);
+            const mostVisibleEl = foundEls.reduce((acc, curr) => curr.visible > acc.visible ? curr : acc);
+    
+            console.info('mostVisibleEl:', mostVisibleEl);
+            return mostVisibleEl.el;
+        } catch (e) {
+            console.error('findFirstElementOnScreen fail:', e);
+            if (0 === attempt) {
+                return findFirstElementOnScreen(selector, ++attempt);
+            }
+            return false;
+        }
     }
+
 
     // Shakes mouse a bit, trying to emulate mouse shake while grabbing it
     async shakeMouse() {
