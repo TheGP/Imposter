@@ -65,6 +65,7 @@ export default class ImposterClass {
     actionsHistoryRecording = true;
     callbackFailToFindElement = null;
     callbackFailToFindElementExecuting = false;
+    cache = false;
 
     constructor() {
         this.puppeteer = puppeteer;
@@ -75,8 +76,20 @@ export default class ImposterClass {
     // Tries again one more time if in 5 sec connection hasn't been established
     async connect(webSocketLink, attempt = 0) {
 
+        if ('object' === typeof webSocketLink && webSocketLink.hasOwnProperty(`cache`) && webSocketLink.cache) {
+            this.cache = {
+                dir : `./cache/`,
+                resourceTypes : [ `image`, `font` ],
+                contentTypes : [ `image/svg+xml`, `image/png`, `image/jpg`, `image/jpeg` ],
+                ...webSocketLink.cache,
+            }
+            console.log('Cache:', JSON.stringify(this.cache));
+            delete webSocketLink.cache;
+        }
+
         const params = ('object' === typeof webSocketLink) ? {
                 protocolTimeout: 1800000, // 30 min timeout
+                defaultViewport: null,
                 ...webSocketLink
             } : {
                 browserWSEndpoint: webSocketLink,
@@ -107,6 +120,16 @@ export default class ImposterClass {
         if (!options.hasOwnProperty('defaultViewport')) {
             options.defaultViewport = { width: 1700, height: 1400 };
         }
+        if (options.hasOwnProperty(`cache`) && options.cache) {
+            this.cache = {
+                dir : `./cache/`,
+                resourceTypes : [ `image`, `font` ],
+                contentTypes : [ `image/svg+xml`, `image/png`, `image/jpg`, `image/jpeg` ],
+                ...options.cache,
+            }
+            delete options.cache;
+        }
+
         this.pageSize.width = options.defaultViewport.width;
         this.pageSize.height = options.defaultViewport.height;
 
@@ -154,6 +177,7 @@ export default class ImposterClass {
         //await installMouseHelper(this.page);
         this.cursor = createCursor(this.page, await getRandomPagePoint(this.page), true)
         this.scroller = await humanScroll(this.page);
+        await this.activateCache();
     }
 
     // Sets all options
