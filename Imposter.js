@@ -179,9 +179,11 @@ export default class ImposterClass {
 
     // Attaches all needed helpers to the page
     async attachAllToPage() {
+        console.info(`attachAllToPage`);
         //await installMouseHelper(this.page);
         this.cursor = createCursor(this.page, await getRandomPagePoint(this.page), true)
         this.scroller = await humanScroll(this.page);
+        this.page.setDefaultNavigationTimeout(0);
         await this.activateCache();
     }
 
