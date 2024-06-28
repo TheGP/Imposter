@@ -1356,7 +1356,7 @@ export default class ImposterClass {
 
     // Waiting for the page to be rendered
     // https://stackoverflow.com/questions/52497252/puppeteer-wait-until-page-is-completely-loaded
-    async waitTillHTMLRendered(minStableSizeIterations = 3, timeout = 15) {
+    async waitTillHTMLRendered(minStableSizeIterations = 3, timeout = 60) {
         //console.log('waitTillHTMLRendered');
 
         try {
@@ -1364,44 +1364,71 @@ export default class ImposterClass {
                 return document.readyState;
             });
             console.info(`readyState=`, readyState);
-
-            /*
-            const iframeReadyStates = await this.page.evaluate(() => {
-                return Array.from(document.querySelectorAll('iframe')).map(iframe => {
-                    try {
-                        return iframe.contentDocument.readyState;
-                    } catch (e) {
-                        // If iframe is cross-origin, catch the error and return 'cross-origin'
-                        //return 'cross-origin';
-                    }
-                });
-            });
-            console.log(`readyState Iframes=`, JSON.stringify(iframeReadyStates));
-            */
-
+            
+            const start = Date.now();
             if ('loading' === readyState) {
                 while ('loading' === readyState) {
                     readyState = await this.page.evaluate(() => {
                         return document.readyState;
                     });
                     await this.wait(0.3);
-                    //console.log(`Waiting for readyState to be interactive, now =`, readyState);
+                    console.log(`Waiting for readyState to be interactive, now =`, readyState);
+
+                    if (Date.now() - start > timeout * 1000) {
+                        console.error('Timeout: readyState did not become interactive within 180 seconds, reloading page');
+                        await this.page.reload();
+                        return this.waitTillHTMLRendered(minStableSizeIterations, timeout);
+                    }
                 }
     
                 if ('interactive' === readyState) {
                     // holding for 1 more sec and then releasing
                     console.info(`readyState became interactive`);
-                    return await this.wait(1);
+                    await this.wait(1);
                 } else {
                     // if "complete" then releasing right away
                     console.info(`readyState became complete`);
-                    return true;
                 }
             }
+
+            // Waiting for all iframes
+            const iframeReadyStates = async () => {
+                return await Promise.all(this.page.frames().map(async frame => {
+                    try {
+                        const readyState = await frame.evaluate(() => document.readyState);
+                        return { readyState, url: frame.url() };
+                    } catch (e) {
+                        //console.warn(e);
+                        return { readyState: `reloading`, url: frame.url() };
+                    }
+                }));
+            };
+
+            const isAllIframesReady = async () => {
+                return (await iframeReadyStates()).every(s => ["complete", "interactive"].includes(s.readyState));
+            }
+            
+            let iframesReady = await isAllIframesReady();
+            //console.log(`iframesReady`, iframesReady);
+            while (!iframesReady) {
+                console.info(`waiting for frames loaded`);
+                await this.wait(0.2);
+                iframesReady = await isAllIframesReady();
+
+                if (Date.now() - start > timeout * 1000) {
+                    console.error('Timeout: iframesReady did not become interactive within 180 seconds, reloading page');
+                    await this.page.reload();
+                    return this.waitTillHTMLRendered(minStableSizeIterations, timeout);
+                }
+            }
+            //console.log(`All frames interactive or complete`, JSON.stringify(await iframeReadyStates()));
+
         } catch (e) {
             if (e.toString().includes('Execution context was destroyed')) {
                 console.warn('context error, restarting...')
                 return this.waitTillHTMLRendered(minStableSizeIterations, timeout);
+            } else {
+                console.error(e);
             }
         }
 
