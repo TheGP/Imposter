@@ -5,6 +5,11 @@ import pkg from 'ghost-cursor';
 const { createCursor, getRandomPagePoint, installMouseHelper } = pkg;
 import { humanScroll } from "./ghost-scroll/ghost-scroll.mjs"
 
+// For cache
+import path from 'path';
+import crypto from 'crypto';
+import fs from 'fs/promises';
+
 /*
 mouse move
     +overshoot
