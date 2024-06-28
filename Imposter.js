@@ -280,15 +280,19 @@ export default class ImposterClass {
                 await this.cursor.toggleRandomMove(true)
                 return;
             } else if ('' !== value) {
-                await this.waitRandom(0.5, 0.9);
-                await this.page.keyboard.down('ControlLeft');
-                await this.waitRandom(0.1, 0.3);
-                await this.page.keyboard.press('KeyA');
-                await this.waitRandom(1, 2);
-                await this.page.keyboard.press('Backspace');
-                await this.waitRandom(0.2, 0.5);
-                await this.page.keyboard.up('ControlLeft');
-                await this.waitRandom(0.7, 1.2);
+                try {
+                    await this.waitRandom(0.5, 0.9);
+                    await this.page.keyboard.down('ControlLeft');
+                    await this.waitRandom(0.1, 0.3);
+                    await this.page.keyboard.press('KeyA');
+                    await this.waitRandom(1, 2);
+                    await this.page.keyboard.press('Backspace');
+                    await this.waitRandom(0.2, 0.5);
+                    await this.page.keyboard.up('ControlLeft');
+                    await this.waitRandom(0.7, 1.2);
+                } catch (e) {
+                    console.error(`Moving cursor fail`, e);
+                }
             }
         } else {
             // ::TODO:: make sure that cursor at the end of the existing text
@@ -340,6 +344,7 @@ export default class ImposterClass {
             await target.page.keyboard.up('Control');
             return;
         }
+
         let cursorPosition = null;
         const startTime = Date.now();
         const stopInMilliseconds = 5 * 1000;
@@ -419,8 +424,12 @@ export default class ImposterClass {
     async click(selectorOrObj, text = null, timeout = 10, attempt = 1) {
         console.log('click', selectorOrObj, text);
         await this.waitTillHTMLRendered();
-        if ('object' === typeof selectorOrObj && selectorOrObj instanceof Promise) selectorOrObj = await selectorOrObj;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
         this.recordAction('click', [ selectorOrObj, text, timeout ]);
+        const selectorOrObjOriginal = selectorOrObj;
+
+        selectorOrObj = ('function' === typeof selectorOrObj) 
+                            ? await selectorOrObj()
+                            : await selectorOrObj;
 
         await this.waitRandom(0.1, 0.7);
         //await this.waitForNetworkIdle(1);
@@ -485,7 +494,7 @@ export default class ImposterClass {
         } catch (e) {
             if (e.message.includes('Could not mouse-over element within enough tries') && attempt < 3) {
                 console.log(`Error "Could not mouse-over element within enough tries" detected, refreshing element, attempt=`, attempt);
-                return this.click(selectorOrObj, text, timeout, ++attempt)
+                return this.click(selectorOrObjOriginal, text, timeout, ++attempt)
             } else {
                 throw e;
             }
@@ -628,6 +637,10 @@ export default class ImposterClass {
             console.info('in imposter', selector, value.toString(), typeof value.toString());
             await this.page.select(selector, value.toString())
         } else {
+            selector = ('function' === typeof selector)
+                            ? await selector()
+                            :selector;
+
             if (selector.hasOwnProperty('el')) {
                 await selector.el.select(String(value));
             }
@@ -639,9 +652,12 @@ export default class ImposterClass {
     }
 
     // gets attribute or value of element, which can be on the page or iframe
-    async getAttribute(elObjOrSelector, attribute_name) {
+    async getAttribute(elObjOrSelector, attribute_name, timeout = 0) {
+        //console.log('getAttribute', elObjOrSelector);
+        if (null === elObjOrSelector) return false;
+
         const { el, target } = ('string' == typeof elObjOrSelector)
-                                    ? await this.findElementAnywhere(elObjOrSelector, null, 1, true, true)
+                                    ? await this.findElementAnywhere(elObjOrSelector, null, timeout, true, true)
                                     : (elObjOrSelector.hasOwnProperty('target') ? elObjOrSelector : {el: elObjOrSelector, target: this.page});
         
         if (el) {
@@ -816,7 +832,7 @@ export default class ImposterClass {
 
     // Searches and returns element by selector or selector + text (at first on the page, than in every frame)
     async findElementAnywhere(selector, text = null, timeout = 10, ignoreVisibility = false, noDigging = false, startTime = Date.now()) {
-        const selectorOriginal = selector;
+        const selectorOriginal = await selector;
         const textOriginal = text;
 
         if (-2 === startTime) { // doing it in reverse
@@ -1118,7 +1134,7 @@ export default class ImposterClass {
 
     // get frame that startsWith
     async getFrame(startWith = '', debug = false) {
-        this.page.waitForNavigation({waitUntil: 'networkidle2'})
+        //this.page.waitForNavigation({waitUntil: 'networkidle2'})
         const frame = this.page.frames().find(f => {
             if (debug) {
                 console.info(f.url());
@@ -1319,6 +1335,7 @@ export default class ImposterClass {
 
     // Checks if there is a captcha on the page and returns its name
     async isThereCaptcha() {
+        await this.waitTillHTMLRendered();
         if (await this.getAttribute('[name="fc-token"]', 'value')) {
             return 'arkose';
         }
