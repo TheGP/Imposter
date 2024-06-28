@@ -1446,6 +1446,119 @@ export default class ImposterClass {
     }
 
 
+    activateCache = async () => {
+        return;
+        if (!this.cache) return;
+        //console.log(`this.cache`, JSON.stringify(this.cache));
+
+        const generateSHA1Hash = (data) => {
+            const hash = crypto.createHash('sha1');
+            hash.update(data);
+            return hash.digest('hex');
+        };
+
+        this.page.on('request', async (request) => {
+            try {
+                //console.log(`url=`, request.url());
+                if (request.isInterceptResolutionHandled()) {
+                    //request.continue();
+                    return;
+                };
+
+                const fileName = generateSHA1Hash(request.url());
+                const filePath = path.join(this.cache.dir, fileName);
+
+                // Skipping extensions
+                if (request.url().startsWith(`chrome-extension://`)) {
+                    request.continue();
+                    return;
+                }
+
+                //console.log('2', request.url(), fileName, filePath, await fs.stat(filePath));
+        
+                // Check if the image is already cached on disk
+                try {
+                    //console.log(`filePath`, filePath, request.url());
+                    const buffer = await fs.readFile(filePath);
+                    const content = await fs.readFile(filePath + '.meta', 'utf8');
+                    const [contentType, maxAge] = content.split('\n');
+
+                    //console.log(`From cache:`, request.url(), filePath);
+
+                    return request.respond({
+                        status: 200,
+                        contentType: contentType,
+                        body: buffer,
+                    });
+                } catch (e) {
+                    //console.log(e);
+                }
+
+                return request.continue();
+                //console.log(`Finished `, request.url());
+            } catch (e) {
+                //console.warn(`Cache error:`, e);
+            }
+
+            request.continue();
+        });
+
+        this.page.on('response', async (response) => {
+            try {
+
+                const fileName = generateSHA1Hash(response.url());
+                //console.log(`response.url()`, response.url(), fileName);
+
+                const filePath = path.join(this.cache.dir, fileName);
+                const contentType = response.headers()['content-type'] || false;
+                const cacheControl = response.headers()['cache-control'];
+
+                const maxAgeMatch = cacheControl ? cacheControl.match(/max-age=(\d+)/) : false;
+                const maxAge = maxAgeMatch ? +maxAgeMatch[1] : 0;
+                //console.log(`!!!`, JSON.stringify(this.cache), this.cache.resourceTypes, response.request().resourceType());
+
+                /*
+                if (response.url().startsWith('https://thegp.ru/1.png')) {
+                    console.log('status=', response.status(), 'contentType=', contentType, 'this.cache.contentTypes=', this.cache.contentTypes, 'resourceType=', response.request().resourceType());
+                    console.log('includes=', this.cache.resourceTypes.includes(response.request().resourceType()));
+                    if (contentType) {
+                        console.log('some=', this.cache.contentTypes.some(value => contentType.includes(value)));
+                    }
+                    console.log('maxAge=', maxAge);
+                    console.log('response.headers()=', JSON.stringify(response.headers()));
+                }
+*/
+                if (
+                    ![301, 302].includes(response.status()) &&
+                    (
+                        (contentType && this.cache.contentTypes && this.cache.contentTypes.some(value => contentType.includes(value))) || 
+                        this.cache.resourceTypes.includes(response.request().resourceType())
+                    ) &&
+                    // Not caching trackers etc with max age
+                    0 !== maxAge
+                    ) {
+                        const buffer = await response.buffer();
+
+                        const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+                        const maxAge = maxAgeMatch ? maxAgeMatch[1] : 0;
+        
+                        if (0 !== maxAge) {
+                            //console.log('Cached', response.url(), filePath);
+                            //console.log(`resourceType=`, response.request().resourceType(), `contentType=`, contentType, 'maxAge=', maxAge);
+            
+                            await fs.writeFile(filePath, buffer);
+                            await fs.writeFile(filePath + '.meta', contentType + "\n" + maxAge);
+                        }
+                }
+            } catch (e) {
+                console.warn(`Cache error:`, e);
+            }
+        });
+
+        await this.page.setRequestInterception(true);
+    }
+
+
     // Records actions for replayPreviousAction
     recordAction(func, params) {
         if (this.actionsHistoryRecording) {
