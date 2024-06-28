@@ -231,21 +231,25 @@ export default class ImposterClass {
     // ::TODO:: click after text? (need to make it work together with removing current value)
     // ::TODO:: do not type if its already typed
     async type(selector, string, keepExistingText = false) {
-        if ('object' === typeof selector && selector instanceof Promise) selector = await selector;  // ::TRICKY:: await is added in case we forgot to receive the element before passing to .click
+        await selector;
         this.recordAction('type', [ selector, string, keepExistingText ]);
         await this.waitTillHTMLRendered(2);
         string = String(string);
 
         console.log('type to', selector, string);
-        const { el, target, type } = ('object' === typeof selector) ? selector : await this.findElementAnywhere(selector);
+
+        const selectorOriginal = selector;
+        selector = ('function' === typeof selector) 
+                            ? await selector()
+                            : await selector;
+
+        const { el, target, type } = ('object' === typeof selector) 
+                                        ? selector 
+                                        : await this.findElementAnywhere(selector);
         console.info('type=', type);
         if (!el) {
             return await this.replayPreviousAction(['NO ELEMENT HAS FOUND', selector]);
         }
-
-        /*if ('string' === typeof selector) {
-            await this.page.waitForSelector(selector, { timeout: 10_000 })
-        }*/
         console.info('target', target, selector, el); // false #register-verification-phone-number
         await this.scrollTo(el, target)
 
