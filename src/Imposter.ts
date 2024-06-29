@@ -985,7 +985,11 @@ export default class ImposterClass {
                     }
                     
                     const isVisible = visibilityCheck(el);
-                    const hasText = (text && el.textContent) ? el.textContent.trim().toLowerCase().includes(text.toLowerCase()) : true;
+                    const hasText = (text) 
+                                        ? (el.textContent) 
+                                            ? el.textContent.trim().toLowerCase().includes(text.toLowerCase())
+                                            : false
+                                        : true;
                     console.log('isVisible', isVisible, 'hasText', hasText);
                     return isVisible && hasText;
                 });
@@ -1047,7 +1051,11 @@ export default class ImposterClass {
 
                         //console.log('el', el, el.textContent.trim().toLowerCase())
                         const isVisible = visibilityCheck(el);
-                        const hasText = (text && el.textContent) ? el.textContent.trim().toLowerCase().includes(text.toLowerCase()) : true;
+                        const hasText = (text) 
+                                            ? (el.textContent)
+                                                ? el.textContent.trim().toLowerCase().includes(text.toLowerCase()) 
+                                                : false
+                                            : true;
                         console.log('isVisible', isVisible, 'hasText', hasText);
                         return isVisible && hasText;
                     });
