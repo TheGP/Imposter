@@ -1598,19 +1598,27 @@ export default class ImposterClass {
 
         console.log(`frameUrls=`, frameUrls);
 
+        let res = false;
         if (typeof url === 'string') {
-            return frameUrls.includes(url);
+            res = frameUrls.includes(url);
         } else if (url instanceof RegExp) {
-            return frameUrls.some(frameUrl => url.test(frameUrl));
+            res = frameUrls.some(frameUrl => url.test(frameUrl));
         }
 
-        // If not yet time - trying again in 0.5 sec
+        // If found - immediately returning result
+        if (res) {
+            return res;
+        }
+
+        // If not yet time & not found - trying again in 0.5 sec
         if (Date.now() <= startTime + timeout * 1000) {
-            await this.wait(500);
+            console.log('not yet time');
+            await this.wait(0.5);
             return this.isThereIframe(url, timeout, startTime);
         }
 
-        return false;
+        // Otherwise returning what we have
+        return res;
     }
 
 
