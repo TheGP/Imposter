@@ -197,6 +197,11 @@ export default class ImposterClass {
         //console.info('visiblePages', JSON.stringify(visiblePages))
         const activeTab = visiblePages[0];
 
+        if (activeTab === this.page) {
+            console.info('This tab is already attached, ignoring');
+            return;
+        }
+
         if (!activeTab && !failEasy) {
             // waiting 30 sec for active tab to appear (because link opened in new tab can be not detected before connecting to the website)
             if (sec < 30) {
