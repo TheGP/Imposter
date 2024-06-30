@@ -1,10 +1,9 @@
 import { typeInto } from "../puppeteer-humanize/lib/index.js"
-import puppeteer, { Page, Frame, GoToOptions, PuppeteerLaunchOptions, ElementHandle } from "puppeteer"
+import puppeteer, { Browser, Page, Frame, GoToOptions, PuppeteerLaunchOptions, ElementHandle } from "puppeteer"
 //import pkg from './ghost-cursor/lib/spoof.js';
-import pkg from 'ghost-cursor';
-const { createCursor, getRandomPagePoint, installMouseHelper } = pkg;
-import { humanScroll } from "../ghost-scroll/ghost-scroll.mjs"
+import { createCursor, getRandomPagePoint, installMouseHelper, GhostCursor } from 'ghost-cursor';
 
+import { humanScroll } from "../ghost-scroll/ghost-scroll.mjs"
 
 // For cache
 import path from 'path';
@@ -45,7 +44,7 @@ interface Cache {
 
 interface iElement {
     el: ElementHandle, //  | Object 
-    target: Page | Frame,
+    target?: Page | Frame,
     type?: 'page' | 'frame',
 }
 
@@ -53,7 +52,7 @@ type iPuppeteerLaunchOptions = PuppeteerLaunchOptions & {
     cache: Cache | null;
 }
 
-type iSelector = string | iElement | ElementHandle | Function;
+type iSelector = string | iElement | ElementHandle | (() => Promise<string | ElementHandle>);
 
 type webSocketLink = string | { browserURL: string, cache?: Cache | null }
 
@@ -65,18 +64,42 @@ interface Dictionary {
 
 type Direction = 'up' | 'down';
 
-
+interface Behaviour {
+    mouse: {
+        hesitation: { min: number; max: number };
+        release: { min: number; max: number };
+    };
+    typing: {
+        mistakes: {
+            chance: number;
+            delay: {
+                min: number;
+                max: number;
+            };
+        };
+        delays: {
+            all: { chance: number; min: number; max: number };
+            complete: { chance: number; min: number; max: number };
+            space: { chance: number; min: number; max: number };
+            punctuation: { chance: number; min: number; max: number };
+            termination: { chance: number; min: number; max: number };
+            cadence: { chance: number; min: number; max: number };
+        };
+        noticing_focus: number;
+    };
+}
+  
 export default class ImposterClass {
     puppeteer;
     browser;
     cursorPosition = { x: 0, y: 0 };
     page : Page; // | null
-    cursor;
+    cursor: GhostCursor;
     scroller;
     pageSize = { width : 0, height: 0 };
     dictionary: Dictionary = {};
     lang = 'en';
-    behavior = {
+    behavior: Behaviour = {
         mouse: {
             hesitation: { min: 50, max: 2000 },
             release: { min: 1, max: 600 }
@@ -173,8 +196,10 @@ export default class ImposterClass {
             delete options.cache;
         }
 
-        this.pageSize.width = options.defaultViewport.width;
-        this.pageSize.height = options.defaultViewport.height;
+        if (options.defaultViewport) {
+            this.pageSize.width = options.defaultViewport.width;
+            this.pageSize.height = options.defaultViewport.height;
+        }
 
         this.browser = await puppeteer.launch({
             headless: false,
@@ -233,7 +258,7 @@ export default class ImposterClass {
     }
 
     // Sets all options
-    async setBehaviorFingerprint(behavior): Promise<void> {
+    async setBehaviorFingerprint(behavior: Behaviour): Promise<void> {
         this.behavior = {
             ...this.behavior,
             ...behavior
@@ -626,7 +651,7 @@ export default class ImposterClass {
             console.info('element is in the view')
         }
         
-        while (!res.isInView) {
+        while (!res!.isInView) {
             console.info('scrolling to el', res.direction);
             await this.waitRandom(0.1, 1.5);
             const scroller = await humanScroll(target);
@@ -1156,7 +1181,7 @@ export default class ImposterClass {
             }
         }
 
-        const res = await target.evaluateHandle((parent, selector, text: string | null) => {
+        const res = await target.evaluateHandle((parent: HTMLElement, selector: string, text: string | null) => {
 
             const els: HTMLElement[] = Array.from(parent.querySelectorAll(selector));
             if (text) {
@@ -1185,14 +1210,14 @@ export default class ImposterClass {
 
     // Finds element near by
     // ::TODO:: make ability to select parent as "go 2 divs up" etc
-    async findElNearBy(selectorChild, childText: string | null, selectorParent: string, selectorChild2, childText2: string | null) {
+    async findElNearBy(selectorChild: ElementHandle | string, childText: string | null, selectorParent: string, selectorChild2: string, childText2: string | null) {
         this.recordAction('findElNearBy', [ selectorChild, childText, selectorParent, selectorChild2, childText2 ]);
         const parentEl = await this.findClosestParentEl(selectorChild, selectorParent, childText);
         return await this.findChildEl(parentEl, selectorChild2, childText2);
     }
 
     // where = page or frame
-    async getAttributeSimple(selector, attribute_name: string, where: boolean | Page = false) {
+    async getAttributeSimple(selector: ElementHandle | string, attribute_name: string, where: boolean | Page = false) {
         if ('object' !== typeof where) {
             where = this.page;
         }
@@ -1385,7 +1410,13 @@ export default class ImposterClass {
     }
 
     // Shakes mouse
-    async jitterMouse(options) {
+    async jitterMouse(options: {
+        jitterMin: number,
+        jitterMax: number,
+        fadeDuration?: number,
+        debug?: boolean,
+        jitterCount?: number,
+    }) {
         console.log('jitterMouse');
         if (!this.page) {
             throw new Error('Page is not initialized. Call launch() first.')
@@ -1622,12 +1653,12 @@ export default class ImposterClass {
     }
 
 
-    activateCache = async () => {
+    activateCache = async (): Promise<void> => {
         return;
         if (!this.cache) return;
         //console.log(`this.cache`, JSON.stringify(this.cache));
 
-        const generateSHA1Hash = (data: string) => {
+        const generateSHA1Hash = (data: string): string => {
             const hash = crypto.createHash('sha1');
             hash.update(data);
             return hash.digest('hex');
@@ -1739,7 +1770,7 @@ export default class ImposterClass {
 
 
     // Records actions for replayPreviousAction
-    recordAction(func: string, params: any[]) {
+    recordAction(func: string, params: any[]): void {
         if (this.actionsHistoryRecording) {
             this.actionsHistory.push({ func: func, params: params });
         }
@@ -1747,18 +1778,17 @@ export default class ImposterClass {
 
 
     // Replays previous action and then current action on the current action fail (in case it was misclick or something on the previous action)
-    async replayPreviousAction(error: null | any[] = null) {
+    async replayPreviousAction(error: null | any[] = null): Promise<boolean | any> {
         if (!this.actionsHistoryRecording) {
             console.error('replayPreviousAction still gave an error: ', error);
             throw JSON.stringify(error);
         }
 
         if (2 <= this.actionsHistory.length) {
-            console.warn('Repeating previous action...', this.actionsHistoryRecording);
             this.actionsHistoryRecording = false;
             // repeating previous action
             let action =  this.actionsHistory[this.actionsHistory.length - 2];
-            console.log(`action=`, JSON.stringify(action));
+            console.warn('Repeating previous action...', this.actionsHistoryRecording, JSON.stringify(action));
             try {
                 await this[action.func].apply(this, action.params);
             } catch (e) {
@@ -1788,16 +1818,16 @@ export default class ImposterClass {
     }
 
     // Get random number (float)
-    random(min: number, max: number) {
+    random(min: number, max: number): number {
         return Math.random() * (max - min) + min;
     }
     // alias
-    rand(min: number, max: number) {
+    rand(min: number, max: number): number {
         return this.random(min, max);
     }
 
     // Get random integer number, if it is not inside except array
-    randomInteger(min: number, max: number, except: number[] = []) {
+    randomInteger(min: number, max: number, except: number[] = []): number {
         let randomNumber : number;
         do {
             randomNumber = Math.floor(this.rand(min, max + 1));
@@ -1805,35 +1835,35 @@ export default class ImposterClass {
         return randomNumber;
     }
     // alias
-    randInt(min: number, max: number, except: number[] = []) {
+    randInt(min: number, max: number, except: number[] = []): number {
         return this.randomInteger(min, max, except);
     }
 
     // Random element from the array
-    randEl(els = []) {
+    randEl<T>(els: T[] = []): T {
         return els[Math.floor(Math.random() * els.length)];
     }
 
     // Wait random times
-    async waitRandom(min: number, max: number) {
+    async waitRandom(min: number, max: number): Promise<void> {
         const randomDelay = this.random(min, max);
         console.info('waitRandom', randomDelay);
         await this.wait(randomDelay);
     }
 
     // Wait
-    async wait(s: number) {
+    async wait(s: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, 1000 * s));
     }
 
     // Translating string based on dictionary
-    translate(string: string | any) {
+    translate(string: string | any): string | any {
         if ('string' !== typeof string) return string;
         return (this.dictionary.hasOwnProperty(this.lang) && this.dictionary[this.lang].hasOwnProperty(string)) ? this.dictionary[this.lang][string] : string;
     }
 
     // Translating text even it is inside the string like `input[placeholder="Ex: Boston University"]`
-    tryTranslate(string: any) {
+    tryTranslate(string: any): any {
         if ('string' !== typeof string) return string;
 
         //console.info('tryTranslate', string);
@@ -1849,7 +1879,7 @@ export default class ImposterClass {
         return string;
     }
 
-    setDictionary(lang: string, dictionary: {[key: string]: string}) {
+    setDictionary(lang: string, dictionary: {[key: string]: string}): void {
         this.dictionary[lang] = dictionary;
     }
 }
