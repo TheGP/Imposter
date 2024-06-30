@@ -317,7 +317,7 @@ export default class ImposterClass {
                                         ? selector 
                                         : await this.findElementAnywhere(selector);
         console.info('type=', type);
-        if (!el) {
+        if (!el || !(el instanceof ElementHandle)) {
             return await this.replayPreviousAction(['NO ELEMENT HAS FOUND', selector]);
         }
         console.info('target', target, selector, el); // false #register-verification-phone-number
@@ -521,7 +521,7 @@ export default class ImposterClass {
                                                 type : 'page',
                                             };
 
-        if (!el) {
+        if (!el || !(el instanceof ElementHandle)) { // el.toString() === 'JSHandle:undefined'
             return await this.replayPreviousAction(['NO ELEMENT HAS FOUND', selectorOrObj, text]);
         }
         console.info('element found:', type, el, JSON.stringify(target));
@@ -1144,10 +1144,10 @@ export default class ImposterClass {
                                         ? selectorChild 
                                         : await this.findElementAnywhere(selectorChild, childText, timeout, true);
 
-        if (!el) {
+        if (!el || !(el instanceof ElementHandle)) {
             return {
-                target : false,
                 el : false,
+                target : false,
                 type : 'page',
             };
         }
@@ -1173,7 +1173,7 @@ export default class ImposterClass {
                                     ? (elObjOrSelector.hasOwnProperty('target') ? elObjOrSelector : {el: elObjOrSelector, target: this.page})
                                     : await this.findElementAnywhere(elObjOrSelector);
 
-        if (!el) {
+        if (!el || !(el instanceof ElementHandle)) {
             return {
                 el: false,
                 target: false,
@@ -1293,7 +1293,7 @@ export default class ImposterClass {
                                     ? await target.$(selector)
                                     : selector;
       
-        if (!elementHandle) {
+        if (!elementHandle || !(elementHandle instanceof ElementHandle)) {
             console.error(`Element with selector "${selector}" not found.`);
             return null;
         }
