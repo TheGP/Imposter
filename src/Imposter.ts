@@ -2,7 +2,6 @@ import { typeInto } from "../puppeteer-humanize/lib/index.js"
 import puppeteer, { Browser, Page, Frame, GoToOptions, PuppeteerLaunchOptions, ElementHandle } from "puppeteer"
 //import pkg from './ghost-cursor/lib/spoof.js';
 import { createCursor, getRandomPagePoint, installMouseHelper, GhostCursor } from 'ghost-cursor';
-
 import { humanScroll } from "../ghost-scroll/ghost-scroll.mjs"
 
 // For cache
@@ -31,6 +30,7 @@ type
     +slow down when switching the language
     +misstakes and correction
 */
+
 interface Action {
     func: string;
     params: any[]
@@ -797,18 +797,17 @@ export default class ImposterClass {
             cbElse = null;
         } 
 
-        console.info('->', [ selector, text, timeout, cb, cb2 ]);
-
         const actionsHistoryRecordingPrev = this.actionsHistoryRecording;
         if (cb) {
+            // Recording is there as it has callback function
             this.recordAction('isThere', [ selector, text, timeout, cb, cb2 ]);
             this.actionsHistoryRecording = false;
         }
 
         const { el, target } = await this.findElementAnywhere(selector, text as string, timeout, false, true);
         const isThere = (el && el.asElement()) ? true : false;
-        console.info(`isThere`, isThere);
-        
+        console.info(`isThere`, 'res=', isThere, [ selector, text, timeout, cb, cb2 ]);
+
         let res = isThere;
         if (cb || cb2) {
             if (isThere) {
@@ -1141,7 +1140,12 @@ export default class ImposterClass {
                 console.error('context error, restarting...')
                 return await this.findElementAnywhere(selector, text, timeout); // resetting only startTime
             } else {
-                console.error('UNKNOWN ERROR', e);
+                console.error('UNKNOWN ERROR', e, e.stack);
+                const err = new Error();
+                if (err.stack) {
+                    const caller = err.stack.split('\n')[2].trim();
+                    console.log(`Called by: ${caller}`);
+                }
                 await this.wait(0.1);
                 return await this.findElementAnywhere(selector, text, timeout, ignoreVisibility, noDigging, startTime);
             }
@@ -1519,7 +1523,7 @@ export default class ImposterClass {
             let readyState = await this.page.evaluate(() => {
                 return document.readyState;
             });
-            console.info(`readyState=`, readyState);
+            //console.info(`readyState=`, readyState);
             
             const start = Date.now();
             if ('loading' === readyState) {
