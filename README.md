@@ -34,7 +34,6 @@ git clone git@github.com:TheGP/Imposter.git
 cd Imposter
 npm i
 git clone git@github.com:TheGP/ghost-scroll.git
-git clone git@github.com:TheGP/ghost-cursor.git
 git clone git@github.com:TheGP/puppeteer-humanize.git
 cd puppeteer-humanize
 npm i -g pnpm
@@ -43,13 +42,15 @@ npm run build
 cd ..
 cd ghost-scroll
 npm i
+cd ..
+npm run build
 ```
 
 
 ## Example
 
 ```javascript
-import ImposterClass from "./Imposter/Imposter.js"
+import ImposterClass from "./Imposter/dist/Imposter.js"
 const i = new ImposterClass();
 const webSocketLink = `ws://`;
 
