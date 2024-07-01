@@ -720,10 +720,11 @@ export default class ImposterClass {
     }
 
     // ::TODO:: skip if selected value is correct already
-    async select(selector, value: string | number) {
+    async select(selector, value: string | number): Promise<void> {
         console.log('select', selector, value);
 
         this.recordAction('select', [ selector, value ]);
+        const actionsHistoryRecordingPrev = this.actionsHistoryRecording;
         this.actionsHistoryRecording = false;
 
         await this.cursor.toggleRandomMove(false);
@@ -746,7 +747,9 @@ export default class ImposterClass {
         await this.click(selector);
         await this.cursor.toggleRandomMove(true);
 
-        this.actionsHistoryRecording = true;
+        if (actionsHistoryRecordingPrev) {
+            this.actionsHistoryRecording = true;
+        }
     }
 
     // gets attribute or value of element, which can be on the page or iframe
@@ -806,21 +809,22 @@ export default class ImposterClass {
         const isThere = (el && el.asElement()) ? true : false;
         console.info(`isThere`, isThere);
         
+        let res = isThere;
         if (cb || cb2) {
             if (isThere) {
                 if (cb) {
-                    return await cb();
+                    res = await cb();
                 }
             } else {
                 if (cb2) {
-                    return await cb2();
+                    res = await cb2();
                 }
             }
-            if (!actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
+            if (actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
                 this.actionsHistoryRecording = true;
             }
         }
-        return isThere;
+        return res;
     }
 
     
@@ -852,11 +856,12 @@ export default class ImposterClass {
             res = await this.isThere(selector, text, timeout);
         }
 
-        if (res && 'function' === typeof cb) {
-            return cb();
-        }
-        if (!actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
+        if (actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
             this.actionsHistoryRecording = true;
+        }
+
+        if (res && 'function' === typeof cb) {
+            return await cb();
         }
     }
  
@@ -1109,9 +1114,14 @@ export default class ImposterClass {
 
         // trying to execute special function that set in case el is not found and then try to find it one last time
         if (!noDigging && -1 !== startTime && -2 !== startTime && this.callbackFailToFindElement && !this.callbackFailToFindElementExecuting) {
-            console.info(`Trying to execute special callback function`);
+            console.info(`Trying to execute special callback function`, this.actionsHistoryRecording);
             this.callbackFailToFindElementExecuting = true;
+            const actionsHistoryRecordingPrev = this.actionsHistoryRecording;
+            this.actionsHistoryRecording = false;
             await this.callbackFailToFindElement();
+            if (actionsHistoryRecordingPrev) { // do not turning it on again if it was already off (replaying actions)
+                this.actionsHistoryRecording = true;
+            }
             this.callbackFailToFindElementExecuting = false;
             return this.findElementAnywhere(selectorOriginal, textOriginal, 0, ignoreVisibility, noDigging, -1);
         }
@@ -1211,7 +1221,6 @@ export default class ImposterClass {
     // Finds element near by
     // ::TODO:: make ability to select parent as "go 2 divs up" etc
     async findElNearBy(selectorChild: ElementHandle | string, childText: string | null, selectorParent: string, selectorChild2: string, childText2: string | null) {
-        this.recordAction('findElNearBy', [ selectorChild, childText, selectorParent, selectorChild2, childText2 ]);
         const parentEl = await this.findClosestParentEl(selectorChild, selectorParent, childText);
         return await this.findChildEl(parentEl, selectorChild2, childText2);
     }
