@@ -14,7 +14,8 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:TheGP/imposter.git"
-  },  "scripts": {
+  },
+  "scripts": {
     "start": "node app.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js test.js",
     "build": "npx esbuild ./src/Imposter.ts --format=esm --outdir=./dist --platform=node --target=node21 --sourcemap && tsc --emitDeclarationOnly",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "jest": "^29.7.0",
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "prettier": "3.3.2"
   }
 }

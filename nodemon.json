@@ -1,0 +1,5 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "exec": "npx prettier --write src/Imposter.ts --use-tabs --single-quote && npx esbuild ./src/Imposter.ts --format=esm --outdir=./dist --platform=node --target=node21 --sourcemap && tsc --emitDeclarationOnly"
+}
