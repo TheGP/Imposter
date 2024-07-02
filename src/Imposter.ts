@@ -845,7 +845,15 @@ export default class ImposterClass {
 		this.actionsHistoryRecording = false;
 
 		await this.cursor.toggleRandomMove(false);
-		await this.click(selector);
+		// need to not trigger replay in .click
+		if (!(await this.click(selector, null, 10, 0, false))) {
+			// If failed to click - means element is not found
+			this.actionsHistoryRecording = true;
+			return await this.replayPreviousAction([
+				'NO ELEMENT HAS FOUND',
+				selector,
+			]);
+		}
 
 		if ('string' === typeof selector) {
 			console.info(
@@ -864,7 +872,7 @@ export default class ImposterClass {
 		}
 
 		// clicking again to close it
-		await this.click(selector);
+		await this.click(selector, null, 10, 0, false); // Do not triggering replay on fail
 		await this.cursor.toggleRandomMove(true);
 
 		if (actionsHistoryRecordingPrev) {
