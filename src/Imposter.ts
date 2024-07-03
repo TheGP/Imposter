@@ -567,6 +567,7 @@ export default class ImposterClass {
 		text: null | string = null,
 		timeout: number = 10,
 		attempt: number = 1,
+		triggerReplay: boolean = true,
 	): Promise<ElementHandle | boolean> {
 		console.log('click', selectorOrObj, text);
 		await this.waitTillHTMLRendered();
@@ -599,12 +600,16 @@ export default class ImposterClass {
 						};
 
 		if (!el || !(el instanceof ElementHandle)) {
-			// el.toString() === 'JSHandle:undefined'
-			return await this.replayPreviousAction([
-				'NO ELEMENT HAS FOUND',
-				selectorOrObj,
-				text,
-			]);
+			if (triggerReplay) {
+				// el.toString() === 'JSHandle:undefined'
+				return await this.replayPreviousAction([
+					'NO ELEMENT HAS FOUND',
+					selectorOrObj,
+					text,
+				]);
+			} else {
+				return false;
+			}
 		}
 		console.info('element found:', type, el, JSON.stringify(target));
 
