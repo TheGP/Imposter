@@ -2369,6 +2369,7 @@ export default class ImposterClass {
 	): Promise<boolean | any> {
 		if (!this.actionsHistoryRecording) {
 			console.error('replayPreviousAction still gave an error: ', error);
+			this.actionsHistoryRecording = true;
 			throw JSON.stringify(error);
 		}
 
