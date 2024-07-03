@@ -269,7 +269,7 @@ export default class ImposterClass {
 	}
 
 	// Attaches all needed helpers to the page
-	async attachAllToPage() {
+	async attachAllToPage(): Promise<void> {
 		console.info(`attachAllToPage`);
 		//await installMouseHelper(this.page);
 		this.cursor = createCursor(
@@ -293,7 +293,7 @@ export default class ImposterClass {
 	}
 
 	// Open url
-	async goto(url: string, referer: null | string = null) {
+	async goto(url: string, referer: null | string = null): Promise<void> {
 		this.recordAction('goto', [url]);
 
 		if (!this.page) {
@@ -319,7 +319,7 @@ export default class ImposterClass {
 	}
 
 	// Opens new page
-	async newPage() {
+	async newPage(): Promise<void> {
 		this.page = await this.browser.newPage();
 		this.attachAllToPage();
 	}
@@ -328,7 +328,11 @@ export default class ImposterClass {
 	// ::TODO:: check why it skips some spaces in big block of text on linkedin
 	// ::TODO:: click after text? (need to make it work together with removing current value)
 	// ::TODO:: do not type if its already typed
-	async type(selector: iSelector, string: string, keepExistingText = false) {
+	async type(
+		selector: iSelector,
+		string: string,
+		keepExistingText = false,
+	): Promise<void> {
 		await selector;
 		this.recordAction('type', [selector, string, keepExistingText]);
 		await this.waitTillHTMLRendered(2);
@@ -426,12 +430,12 @@ export default class ImposterClass {
 	// ::TODO:: make cursor moving quicker if its far from mistake placement
 	// ::TODO:: fail if cant fix the text after N attempts (check if text are changing or not, if not make 2nd attempt counter)
 	async typeFixMistake(
-		el,
-		target,
+		el: ElementHandle,
+		target: Page | Frame,
 		shouldbeValue: string,
 		currentValue: string,
 		attempt: number = 0,
-	) {
+	): Promise<void> {
 		console.info('shouldbeValue', shouldbeValue, 'currentValue', currentValue);
 
 		// Find first difference
@@ -441,13 +445,16 @@ export default class ImposterClass {
 		}
 
 		// Find the current cursor position
-		const type = await el.evaluate((element: HTMLInputElement) =>
+		const type = await el.evaluate((element: Element) =>
 			element.getAttribute('type'),
 		);
 		// Number type doesnt allow to get cursor position, so we just replacing whole text
 		if ('number' === type) {
 			// Focusing
-			await target.evaluate((el: HTMLInputElement) => el.focus(), el);
+			await target.evaluate(
+				(el: Element) => (el as HTMLInputElement).focus(),
+				el,
+			);
 			// Deleting all text
 			await target.keyboard.down('Control');
 			await target.keyboard.press('KeyA'); // Select all text
@@ -469,7 +476,7 @@ export default class ImposterClass {
 		const stopInMilliseconds = 5 * 1000;
 		while (null === cursorPosition) {
 			cursorPosition = await target.evaluate(
-				(el: HTMLInputElement) => el.selectionStart,
+				(el: Element) => (el as HTMLInputElement).selectionStart,
 				el,
 			);
 			// In case no cursor inside the field for some reason, focusing it
@@ -481,7 +488,7 @@ export default class ImposterClass {
 				if (stopInMilliseconds <= Date.now() - startTime) {
 					console.log(`Breaking loop because focusing field failed`);
 					await target.evaluate(
-						(el: HTMLInputElement, target) => {
+						(el: Element, target) => {
 							console.log(`Failed to focus el`, el);
 							console.log(`Failed to focus target`, target);
 						},
@@ -653,10 +660,14 @@ export default class ImposterClass {
 		}
 
 		// ::TODO:: break the loop using timeout?
-		// @ts-expect-error
-		const isDisabled = await el
-			.asElement()
-			?.evaluate((element) => element.disabled);
+		const isDisabled = await el.asElement()?.evaluate((node: Node) => {
+			if (node instanceof Element) {
+				return (
+					node as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+				).disabled;
+			}
+			return false;
+		});
 		if (isDisabled) {
 			console.info('waiting for el to become enabled');
 			await this.wait(0.3);
@@ -842,7 +853,10 @@ export default class ImposterClass {
 	}
 
 	// ::TODO:: skip if selected value is correct already
-	async select(selector, value: string | number): Promise<void> {
+	async select(
+		selector: string | (() => Promise<string | ElementHandle>),
+		value: string | number,
+	): Promise<void> {
 		console.log('select', selector, value);
 
 		this.recordAction('select', [selector, value]);
