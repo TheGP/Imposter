@@ -2091,6 +2091,90 @@ export default class ImposterClass {
 		}
 	}
 
+	async waitForPageStopChangingUrl(
+		originalUrl = null,
+		previousUrl = this.page.url(),
+		timeout = 10,
+		timeoutNoChange = 60,
+		start = Date.now(),
+	): Promise<boolean> {
+		try {
+			const currentUrl = this.page.url();
+			console.log('waitForPageStopChangingUrl', previousUrl, currentUrl);
+
+			// if original url is set waiting till its changed
+			if (originalUrl && originalUrl === currentUrl) {
+				if (Date.now() - start > timeoutNoChange * 1000) {
+					console.error(
+						'waitForPageStopChangingUrl url didnt change from original for too long',
+					);
+					return false;
+				}
+				await this.wait(0.5);
+				return this.waitForPageStopChangingUrl(
+					originalUrl,
+					currentUrl,
+					timeout,
+					timeoutNoChange,
+				);
+			}
+
+			if (Date.now() - start > timeout * 1000) {
+				// Timeout, done
+				console.log('Timeout');
+				await this.waitTillHTMLRendered();
+				if (originalUrl === currentUrl) {
+					return false;
+				} else {
+					return true;
+				}
+			} else {
+				if (currentUrl !== previousUrl) {
+					console.log('Dog url changed');
+					// If url changed - restarting time with new url
+					await this.waitTillHTMLRendered();
+					console.log('Dog page is interactive');
+					await this.wait(0.5);
+					return this.waitForPageStopChangingUrl(
+						originalUrl,
+						currentUrl,
+						timeout,
+						timeoutNoChange,
+					);
+				} else {
+					console.log('Url the same');
+					const startLoadingTime = Date.now();
+					await this.waitTillHTMLRendered();
+					start += Date.now() - startLoadingTime; // do not counting loading time
+
+					await this.wait(0.5);
+					return this.waitForPageStopChangingUrl(
+						originalUrl,
+						currentUrl,
+						timeout,
+						timeoutNoChange,
+						start,
+					);
+				}
+			}
+		} catch (e) {
+			if (e.message.includes('Requesting main frame too early')) {
+				console.log(`Requesting main frame too early error, restarting`);
+				return this.waitForPageStopChangingUrl(
+					originalUrl,
+					previousUrl,
+					timeout,
+					timeoutNoChange,
+					start,
+				);
+			}
+
+			console.error('UNKNOWN ERROR2', e, e.stack);
+			//await playSound('error');
+			process.exit();
+		}
+	}
+
 	// Check if there iframe with specified url
 	async isThereIframe(
 		url: string | RegExp,
