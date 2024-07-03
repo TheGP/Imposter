@@ -954,7 +954,7 @@ export default class ImposterClass {
 			selector,
 			text as string,
 			timeout,
-			false,
+			ignoreVisibility as boolean,
 			true,
 		);
 		const isThere = el && el.asElement() ? true : false;
@@ -1462,14 +1462,27 @@ export default class ImposterClass {
 					console.log(`Called by: ${caller}`);
 				}
 				await this.wait(0.1);
-				return await this.findElementAnywhere(
-					selector,
-					text,
-					timeout,
-					ignoreVisibility,
-					noDigging,
-					startTime,
-				);
+
+				if (
+					e.message.includes('TargetCloseError') &&
+					'string' !== typeof selector
+				) {
+					// if page is changed no reason to try again if it is ElementHandler
+					console.error('Target is closed, so returning false');
+					return false;
+				} else if (e.message.includes('is not a valid selector')) {
+					console.error('Selector error, need to be fixed in code');
+					return false;
+				} else {
+					return await this.findElementAnywhere(
+						selectorOriginal,
+						textOriginal,
+						timeout,
+						ignoreVisibility,
+						noDigging,
+						startTime,
+					);
+				}
 			}
 		}
 	}
