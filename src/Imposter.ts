@@ -914,6 +914,7 @@ export default class ImposterClass {
 		selector: string,
 		text: null | Function | string = null,
 		timeout: number | Function = 0,
+		ignoreVisibility: boolean | Function = false,
 		cbTrue: null | Function = null,
 		cbElse: null | Function = null,
 	) {
@@ -926,6 +927,9 @@ export default class ImposterClass {
 		} else if ('function' === typeof timeout) {
 			cb = timeout;
 			timeout = 0.1;
+		} else if ('function' === typeof ignoreVisibility) {
+			cb = ignoreVisibility;
+			ignoreVisibility = false;
 		} else if ('function' === typeof cbTrue) {
 			cb = cbTrue;
 			cbTrue = null;
