@@ -454,13 +454,13 @@ export default class ImposterClass {
 			await target.keyboard.up('Control');
 			await target.keyboard.press('Backspace'); // Delete selected text
 			// Setting value of the clipboard
-			await target.page.evaluate((value: string) => {
+			await target.evaluate((value: string) => {
 				navigator.clipboard.writeText(value);
 			}, shouldbeValue);
 			// Pasting it
-			await target.page.keyboard.down('Control');
-			await target.page.keyboard.press('KeyV');
-			await target.page.keyboard.up('Control');
+			await target.keyboard.down('Control');
+			await target.keyboard.press('KeyV');
+			await target.keyboard.up('Control');
 			return;
 		}
 
