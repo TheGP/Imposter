@@ -191,11 +191,13 @@ export default class ImposterClass {
 			]);
 		} catch (error) {
 			// Restarting connection
-			if (0 === attempt) {
+			if (5 > attempt) {
+				console.info(`Retrying connection`, attempt);
+				this.wait(0.1);
 				return this.connect(webSocketLink, ++attempt);
 			}
 			console.error('Connection failed:', error.message);
-			return false;
+			throw 'Connection failed';
 		}
 
 		//this.browser = await puppeteer.connect(params);
