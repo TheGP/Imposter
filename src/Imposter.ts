@@ -7,12 +7,11 @@ import puppeteer, {
 	PuppeteerLaunchOptions,
 	ElementHandle,
 } from 'puppeteer';
-import {
-	createCursor,
-	getRandomPagePoint,
-	installMouseHelper,
-	GhostCursor,
-} from 'ghost-cursor';
+
+import ghostCursor from 'ghost-cursor';
+const { createCursor, getRandomPagePoint, installMouseHelper } = ghostCursor;
+import { GhostCursor } from 'ghost-cursor';
+
 import { humanScroll } from '../ghost-scroll/ghost-scroll.mjs';
 
 // For cache
