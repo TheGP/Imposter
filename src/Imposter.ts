@@ -139,6 +139,7 @@ export default class ImposterClass {
 	};
 	actionsHistory: Action[] = [];
 	actionsHistoryRecording = true;
+	actionsHistoryRecordingLocked = false;
 	callbackFailToFindElement: null | Function = null;
 	callbackFailToFindElementExecuting: boolean | Function = false;
 	cache: null | Cache = null;
@@ -2391,9 +2392,12 @@ export default class ImposterClass {
 	async replayPreviousAction(
 		error: null | any[] = null,
 	): Promise<boolean | any> {
+		this.actionsHistoryRecordingLocked = true;
 		if (!this.actionsHistoryRecording) {
 			console.error('replayPreviousAction still gave an error: ', error);
-			this.actionsHistoryRecording = true;
+			if (!this.actionsHistoryRecordingLocked) {
+				this.actionsHistoryRecording = true; // do not set true if its replay inside another replay
+			}
 			throw JSON.stringify(error);
 		}
 
@@ -2415,9 +2419,10 @@ export default class ImposterClass {
 			// repeating current action
 			action = this.actionsHistory[this.actionsHistory.length - 1];
 			console.log(`Repeating current action again`, JSON.stringify(action));
+			this.actionsHistoryRecordingLocked = false; // Its the last action so we can turn off recording if it fails
 			const res = await this[action.func].apply(this, action.params);
 
-			console.log('this.actionsHistoryRecording = true');
+			console.info('this.actionsHistoryRecording = true');
 			this.actionsHistoryRecording = true;
 			return res;
 		} else {
