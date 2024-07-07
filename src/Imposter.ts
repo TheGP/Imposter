@@ -1153,6 +1153,8 @@ export default class ImposterClass {
 		timeout: number = 120,
 		startTime: number = Date.now(),
 	) {
+		await this.wait(1); // wait is here so it will be enough time to render the element
+
 		const { el, target, type } = await this.findElementAnywhere(
 			selector,
 			text,
@@ -1165,7 +1167,6 @@ export default class ImposterClass {
 			//console.log('el=', el, el.asElement())
 			// trying again in 1 sec if time out is not yet reached
 			if (Date.now() <= startTime + timeout * 1000) {
-				await this.wait(1);
 				return this.waitForDissapear(
 					selector,
 					text,
