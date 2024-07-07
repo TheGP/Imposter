@@ -456,18 +456,19 @@ export default class ImposterClass {
 				el,
 			);
 			// Deleting all text
-			await target.keyboard.down('Control');
-			await target.keyboard.press('KeyA'); // Select all text
-			await target.keyboard.up('Control');
-			await target.keyboard.press('Backspace'); // Delete selected text
+			await this.page.keyboard.down('Control');
+			await this.page.keyboard.press('KeyA'); // Select all text
+			await this.page.keyboard.up('Control');
+			await this.page.keyboard.press('Backspace'); // Delete selected text
 			// Setting value of the clipboard
-			await target.evaluate((value: string) => {
+			await this.waitRandom(1, 3);
+			await this.page.evaluate((value: string) => {
 				navigator.clipboard.writeText(value);
 			}, shouldbeValue);
 			// Pasting it
-			await target.keyboard.down('Control');
-			await target.keyboard.press('KeyV');
-			await target.keyboard.up('Control');
+			await this.page.keyboard.down('Control');
+			await this.page.keyboard.press('KeyV');
+			await this.page.keyboard.up('Control');
 			return;
 		}
 
@@ -516,7 +517,7 @@ export default class ImposterClass {
 				await this.waitRandom(0.7, 2);
 			}
 			for (let i = 0; i < arrowKeyCount; i++) {
-				await target.keyboard.press('ArrowRight');
+				await this.page.keyboard.press('ArrowRight');
 				await this.waitRandom(0.5, 0.2);
 			}
 		} else if (arrowKeyCount < 0) {
