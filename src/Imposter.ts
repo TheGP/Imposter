@@ -1983,7 +1983,7 @@ export default class ImposterClass {
 	// https://stackoverflow.com/questions/52497252/puppeteer-wait-until-page-is-completely-loaded
 	async waitTillHTMLRendered(
 		minStableSizeIterations = 3,
-		timeout = 60,
+		timeout = 180,
 	): Promise<void> {
 		//console.log('waitTillHTMLRendered');
 
@@ -2007,7 +2007,7 @@ export default class ImposterClass {
 
 					if (Date.now() - start > timeout * 1000) {
 						console.error(
-							'Timeout: readyState did not become interactive within 180 seconds, reloading page',
+							`Timeout: readyState did not become interactive within ${timeout} seconds, reloading page`,
 						);
 						await this.page.reload();
 						return this.waitTillHTMLRendered(minStableSizeIterations, timeout);
