@@ -2114,19 +2114,37 @@ export default class ImposterClass {
 		}
 	}
 
-	async waitForPageStopChangingUrl(
+	async waitForPageStopChangingUrl({
 		originalUrl = null,
 		previousUrl = this.page.url(),
 		timeout = 10,
 		timeoutNoChange = 60,
 		start = Date.now(),
-	): Promise<boolean> {
+		didntChangeCb = null, // Used after timeout to make sure we've done everything on the page and url is changing
+		didntChangeCbExecuted = 1,
+	}: {
+		originalUrl?: string | null;
+		previousUrl?: string;
+		timeout?: number;
+		timeoutNoChange?: number;
+		start?: number;
+		didntChangeCb?: Function | null;
+		didntChangeCbExecuted?: number;
+	} = {}): Promise<boolean> {
 		try {
 			const currentUrl = this.page.url();
 			console.log('waitForPageStopChangingUrl', previousUrl, currentUrl);
 
 			// if original url is set waiting till its changed
 			if (originalUrl && originalUrl === currentUrl) {
+				// Executing callback every time timeout execeeds (by default on 10s, 20s, 30s etc)
+				if (
+					didntChangeCb &&
+					Date.now() - start > didntChangeCbExecuted * timeout * 1000
+				) {
+					console.info(`Executing didntChangeCb`);
+					await didntChangeCb();
+				}
 				if (Date.now() - start > timeoutNoChange * 1000) {
 					console.error(
 						'waitForPageStopChangingUrl url didnt change from original for too long',
@@ -2134,12 +2152,14 @@ export default class ImposterClass {
 					return false;
 				}
 				await this.wait(0.5);
-				return this.waitForPageStopChangingUrl(
+				return this.waitForPageStopChangingUrl({
 					originalUrl,
-					currentUrl,
+					previousUrl,
 					timeout,
 					timeoutNoChange,
-				);
+					start,
+					didntChangeCb,
+				});
 			}
 
 			if (Date.now() - start > timeout * 1000) {
@@ -2158,12 +2178,14 @@ export default class ImposterClass {
 					await this.waitTillHTMLRendered();
 					console.log('Dog page is interactive');
 					await this.wait(0.5);
-					return this.waitForPageStopChangingUrl(
+					return this.waitForPageStopChangingUrl({
 						originalUrl,
-						currentUrl,
+						previousUrl,
 						timeout,
 						timeoutNoChange,
-					);
+						start,
+						didntChangeCb,
+					});
 				} else {
 					console.log('Url the same');
 					const startLoadingTime = Date.now();
@@ -2171,25 +2193,27 @@ export default class ImposterClass {
 					start += Date.now() - startLoadingTime; // do not counting loading time
 
 					await this.wait(0.5);
-					return this.waitForPageStopChangingUrl(
+					return this.waitForPageStopChangingUrl({
 						originalUrl,
-						currentUrl,
+						previousUrl,
 						timeout,
 						timeoutNoChange,
 						start,
-					);
+						didntChangeCb,
+					});
 				}
 			}
 		} catch (e) {
 			if (e.message.includes('Requesting main frame too early')) {
 				console.log(`Requesting main frame too early error, restarting`);
-				return this.waitForPageStopChangingUrl(
+				return this.waitForPageStopChangingUrl({
 					originalUrl,
 					previousUrl,
 					timeout,
 					timeoutNoChange,
 					start,
-				);
+					didntChangeCb,
+				});
 			}
 
 			console.error('UNKNOWN ERROR2', e, e.stack);
