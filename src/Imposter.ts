@@ -1658,14 +1658,20 @@ export default class ImposterClass {
 			} else {
 				// checking if it is checkbox
 				const type = await where.evaluate(
-					(element) => element.type || null,
+					(element) => (element as any).type ?? null,
 					el,
 				);
 				console.info('input type=', type);
 				if ('checkbox' === type) {
-					return await where.evaluate((element) => element.checked, el);
+					return await where.evaluate(
+						(element: Element) => (element as HTMLInputElement).checked,
+						el,
+					);
 				} else {
-					return await where.evaluate((element) => element.value, el);
+					return await where.evaluate(
+						(element: Element) => (element as any).value ?? null,
+						el,
+					);
 				}
 			}
 		} else {
