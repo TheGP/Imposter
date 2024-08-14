@@ -666,7 +666,9 @@ export default class ImposterClass {
 	): Promise<ElementHandle | boolean> {
 		console.log('click', selectorOrObj, text);
 		await this.waitTillHTMLRendered();
-		this.recordAction('click', [selectorOrObj, text, timeout]);
+		if (triggerReplay) {
+			this.recordAction('click', [selectorOrObj, text, timeout]);
+		}
 		const selectorOrObjOriginal = selectorOrObj;
 
 		selectorOrObj =
@@ -711,7 +713,13 @@ export default class ImposterClass {
 		let res = await this.isElementInView(el, target);
 		if (null === res) {
 			// Looks like need to reload el
-			return this.click(selectorOrObjOriginal, text, timeout, ++attempt);
+			return this.click(
+				selectorOrObjOriginal,
+				text,
+				timeout,
+				++attempt,
+				triggerReplay,
+			);
 		}
 
 		if (!res.isInView) {
@@ -744,7 +752,13 @@ export default class ImposterClass {
 		}
 
 		if (!(await this.scrollTo(el, target))) {
-			return this.click(selectorOrObjOriginal, text, timeout, ++attempt);
+			return this.click(
+				selectorOrObjOriginal,
+				text,
+				timeout,
+				++attempt,
+				triggerReplay,
+			);
 		}
 
 		// ::TODO:: break the loop using timeout?
@@ -758,8 +772,14 @@ export default class ImposterClass {
 		});
 		if (!ignoreIfDisabled && isDisabled) {
 			console.info('waiting for el to become enabled');
-			await this.wait(0.3);
-			return await this.click(selectorOrObj, text, timeout);
+			await this.wait(0.5);
+			return await this.click(
+				selectorOrObj,
+				text,
+				timeout,
+				attempt,
+				triggerReplay,
+			);
 		}
 
 		try {
@@ -775,7 +795,13 @@ export default class ImposterClass {
 					`Error "Could not mouse-over element within enough tries" detected, refreshing element, attempt=`,
 					attempt,
 				);
-				return this.click(selectorOrObjOriginal, text, timeout, ++attempt);
+				return this.click(
+					selectorOrObjOriginal,
+					text,
+					timeout,
+					++attempt,
+					triggerReplay,
+				);
 			} else {
 				throw e;
 			}
@@ -885,6 +911,8 @@ export default class ImposterClass {
 
 	// scroll and read posts
 	async read(howLong = 10) {
+		await this.waitTillHTMLRendered();
+
 		const finishTime = Date.now() + howLong * 1000;
 
 		const isScrolledToBottom = async () => {
