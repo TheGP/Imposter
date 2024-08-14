@@ -939,24 +939,48 @@ export default class ImposterClass {
 	}
 
 	async closeTab(attach = true) {
-		// No random moves as it exited
-		await this.cursor.toggleRandomMove(false);
-		// choosing random point on the length to emulate moving cursor to close tab
-		const randomXExitPoint =
-			Math.floor(Math.random() * (this.pageSize.width - 50 + 1)) + 50;
-		await this.cursor.moveTo({ x: randomXExitPoint, y: 0 });
-		// Waiting to emulate moving to closse button and clicking it
-		await this.waitRandom(1, 2.5);
-		delete this.cursor;
+		await this.cursorMoveToTabs();
+		// @ts-expect-error
+		this.cursor = null;
 		// Safely closing the tab
-		await this.page.close();
-		this.page = null;
+		if (this.page) {
+			await this.page.close();
+			// @ts-expect-error
+			this.page = null;
+		}
 
 		try {
+			await this.cursor.toggleRandomMove(false);
 			await this.attachToActiveTab(true);
 		} catch (e) {
 			console.error(e);
 		}
+	}
+
+	async cursorMoveToTabs() {
+		try {
+			// No random moves as it exited
+			this.cursor.toggleRandomMove(false);
+
+			const randomXExitPoint = await this.getRandomExitPosition();
+			await this.cursor.moveTo({ x: randomXExitPoint, y: 0 });
+			// Waiting to emulate moving to close button and clicking it
+			await this.waitRandom(1, 2.5);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	async getRandomExitPosition() {
+		// choosing random point on the length to emulate moving cursor to close tab
+		if (0 === this.pageSize.width) {
+			// means it was not set, getting it
+			this.pageSize = await this.page.evaluate(() => ({
+				width: document.documentElement.scrollWidth,
+				height: document.documentElement.scrollHeight,
+			}));
+		}
+		return Math.floor(Math.random() * (this.pageSize.width - 50 + 1)) + 50;
 	}
 
 	// close page with mouse going to the close button
