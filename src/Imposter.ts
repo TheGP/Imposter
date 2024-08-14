@@ -1674,13 +1674,19 @@ export default class ImposterClass {
 	}
 
 	// get frame that startsWith
-	async getFrame(startWith = '', debug = false) {
+	async getFrame(startWith: string | RegExp = '', debug = false) {
 		//this.page.waitForNavigation({waitUntil: 'networkidle2'})
 		const frame = this.page.frames().find((f) => {
 			if (debug) {
 				console.info(f.url());
 			}
-			return f.url().startsWith(startWith);
+
+			if (startWith instanceof RegExp) {
+				//console.log('startWith', startWith, 'frame url', f.url());
+				return startWith.test(f.url());
+			} else {
+				return f.url().startsWith(startWith);
+			}
 		});
 		return frame;
 	}
