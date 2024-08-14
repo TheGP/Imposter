@@ -2433,6 +2433,22 @@ export default class ImposterClass {
 		}
 	}
 
+	url(type: string | null = null) {
+		const urlFull = this.page.url();
+		const url = new URL(urlFull);
+		if ('base' === type) {
+			return url.origin + url.pathname;
+		} else if ('path' === type) {
+			return url.pathname;
+		} else if ('domain' === type) {
+			return url.hostname.replace(/^www\./, '');
+		} else if ('domain-full' === type) {
+			return url.hostname;
+		} else {
+			return urlFull;
+		}
+	}
+
 	// Returns true with change of percentage%
 	chance(percentage: number) {
 		// Generate a random number between 0 and 99 (inclusive)
