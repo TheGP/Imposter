@@ -271,6 +271,43 @@ export default class ImposterClass {
 			this.page = activeTab;
 			await this.attachAllToPage();
 		}
+	// ::TODO:: option to match with GET-params in url
+	async findTab({
+		url,
+		domain,
+	}: {
+		url?: string | RegExp;
+		domain?: string | RegExp;
+	}): Promise<Page | false> {
+		const pages = await this.browser.pages();
+		const page = (
+			await Promise.all(
+				pages.map(async (page) => {
+					const pageUrl = page.url();
+					const pageUrlPath =
+						new URL(pageUrl).origin + new URL(pageUrl).pathname; // removing GET-params
+					let isFound = false;
+					if (url) {
+						isFound =
+							url instanceof RegExp
+								? url.test(pageUrlPath)
+								: url === pageUrlPath ||
+									url + '/' === pageUrlPath ||
+									url === pageUrl; //checking with GET-params too
+					} else {
+						const pageDomain = new URL(pageUrl).hostname;
+						isFound =
+							domain instanceof RegExp
+								? domain.test(pageDomain)
+								: domain === pageDomain;
+					}
+
+					return isFound ? page : false;
+				}),
+			)
+		).find((page) => false !== page);
+
+		return page || false;
 	}
 
 	// Attaches all needed helpers to the page
