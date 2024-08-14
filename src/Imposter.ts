@@ -340,8 +340,21 @@ export default class ImposterClass {
 	// Sets all options
 	async setBehaviorFingerprint(behavior: Behaviour): Promise<void> {
 		this.behavior = {
-			...this.behavior,
-			...behavior,
+			mouse: {
+				...this.behavior.mouse,
+				...behavior.mouse,
+			},
+			typing: {
+				...this.behavior.typing,
+				mistakes: {
+					...this.behavior.typing.mistakes,
+					...behavior.typing.mistakes,
+				},
+				delays: {
+					...this.behavior.typing.delays,
+					...behavior.typing.delays,
+				},
+			},
 		};
 	}
 
