@@ -359,26 +359,46 @@ export default class ImposterClass {
 	}
 
 	// Open url
-	async goto(url: string, referer: null | string = null): Promise<void> {
+	async goto(url: string, referer: null | string = null, forceRefresh = false): Promise<void> {
 		this.recordAction('goto', [url]);
 
+		// If no page opened yet
 		if (!this.page) {
 			console.info('opening new page');
 			await this.newPage();
 		}
 
 		try {
-			if (url !== this.page.url()) {
-				// Opening url if its not the correct one already
-				//await this.page.setBypassCSP(true);
-				let options: GoToOptions = { timeout: 500 * 1000 };
-				if (referer) {
-					options.referer = referer;
+			if (!this.page || url !== this.page.url()) {
+				// Checking if this url not already opened
+				const page = await this.findTab({ url: url });
+				if (page) {
+					await this.cursorMoveToTabs();
+					await this.waitRandom(0.5, 2);
+					await page.bringToFront();
+					this.page = page;
+					await this.waitRandom(0.5, 2);
+					
+					if (forceRefresh) {
+						await this.page.reload();
+					}
+					this.attachAllToPage({
+						cursorPosition: { x: await this.getRandomExitPosition(), y: 0 },
+					}); // Entrance should be from top again as we exited there
+					this.cursor.toggleRandomMove(false);
+					return;
+				} else {
+					// Opening url only if its not the correct one already
+					//await this.page.setBypassCSP(true);
+					let options: GoToOptions = { timeout: 500 * 1000 };
+					if (referer) {
+						options.referer = referer;
+					}
+					await this.page.goto(url, options);
 				}
-				await this.page.goto(url, options);
 			}
 		} catch (error) {
-			console.error('network error?');
+			console.error('network error?', url, JSON.stringify(this.page));
 			console.error(error);
 		}
 		await this.waitRandom(0.7, 2.1);
