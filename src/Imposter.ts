@@ -2121,13 +2121,13 @@ export default class ImposterClass {
 	async waitForPageStopChangingUrl({
 		originalUrl = null,
 		previousUrl = this.page.url(),
-		timeout = 10,
-		timeoutNoChange = 60,
+		timeout = 10, // if url changed from original (if set) and not changing for this period of time - return true
+		timeoutNoChange = 60, // s, stops checking if the original url didnt change during this time
 		start = Date.now(),
 		didntChangeCb = null, // Used after timeout to make sure we've done everything on the page and url is changing
 		didntChangeCbExecuted = 1,
 	}: {
-		originalUrl?: string | null;
+		originalUrl?: string | RegExp | null;
 		previousUrl?: string;
 		timeout?: number;
 		timeoutNoChange?: number;
@@ -2137,10 +2137,15 @@ export default class ImposterClass {
 	} = {}): Promise<boolean> {
 		try {
 			const currentUrl = this.page.url();
-			console.log('waitForPageStopChangingUrl', previousUrl, currentUrl);
+			//console.log('waitForPageStopChangingUrl', previousUrl, currentUrl);
 
 			// if original url is set waiting till its changed
-			if (originalUrl && originalUrl === currentUrl) {
+			const isSameAsOriginal =
+				originalUrl instanceof RegExp
+					? originalUrl.test(currentUrl)
+					: originalUrl === currentUrl;
+
+			if (originalUrl && isSameAsOriginal) {
 				// Executing callback every time timeout execeeds (by default on 10s, 20s, 30s etc)
 				if (
 					didntChangeCb &&
@@ -2164,47 +2169,47 @@ export default class ImposterClass {
 					start,
 					didntChangeCb,
 				});
-			}
-
-			if (Date.now() - start > timeout * 1000) {
-				// Timeout, done
-				console.log('Timeout');
-				await this.waitTillHTMLRendered();
-				if (originalUrl === currentUrl) {
-					return false;
-				} else {
-					return true;
-				}
 			} else {
-				if (currentUrl !== previousUrl) {
-					console.log('Dog url changed');
-					// If url changed - restarting time with new url
+				if (Date.now() - start > timeout * 1000) {
+					// Timeout, done
+					console.log('Timeout');
 					await this.waitTillHTMLRendered();
-					console.log('Dog page is interactive');
-					await this.wait(0.5);
-					return this.waitForPageStopChangingUrl({
-						originalUrl,
-						previousUrl,
-						timeout,
-						timeoutNoChange,
-						start,
-						didntChangeCb,
-					});
+					if (isSameAsOriginal) {
+						return false;
+					} else {
+						return true;
+					}
 				} else {
-					console.log('Url the same');
-					const startLoadingTime = Date.now();
-					await this.waitTillHTMLRendered();
-					start += Date.now() - startLoadingTime; // do not counting loading time
+					if (currentUrl !== previousUrl) {
+						console.log('Dog url changed');
+						// If url changed - restarting time with new url
+						await this.waitTillHTMLRendered();
+						console.log('Dog page is interactive');
+						await this.wait(0.5);
+						return this.waitForPageStopChangingUrl({
+							originalUrl,
+							previousUrl,
+							timeout,
+							timeoutNoChange,
+							start,
+							didntChangeCb,
+						});
+					} else {
+						console.log('Url the same');
+						const startLoadingTime = Date.now();
+						await this.waitTillHTMLRendered();
+						start += Date.now() - startLoadingTime; // do not counting loading time
 
-					await this.wait(0.5);
-					return this.waitForPageStopChangingUrl({
-						originalUrl,
-						previousUrl,
-						timeout,
-						timeoutNoChange,
-						start,
-						didntChangeCb,
-					});
+						await this.wait(0.5);
+						return this.waitForPageStopChangingUrl({
+							originalUrl,
+							previousUrl,
+							timeout,
+							timeoutNoChange,
+							start,
+							didntChangeCb,
+						});
+					}
 				}
 			}
 		} catch (e) {
