@@ -53,7 +53,7 @@ interface Cache {
 }
 
 interface iElement {
-	el: ElementHandle; //  | Object
+	el: ElementHandle | undefined; //  | Object
 	target?: Page | Frame;
 	type?: 'page' | 'frame';
 }
@@ -105,18 +105,21 @@ interface Behaviour {
 
 export default class ImposterClass {
 	puppeteer;
-	browser;
+	browser: Browser;
 	cursorPosition = { x: 0, y: 0 };
 	page: Page; // | null
 	cursor: GhostCursor;
 	scroller;
-	pageSize = { width: 0, height: 0 };
+	pageSize: { width: number; height: number } = { width: 0, height: 0 };
 	dictionary: Dictionary = {};
 	lang = 'en';
 	behavior: Behaviour = {
 		mouse: {
 			hesitation: { min: 50, max: 2000 },
 			release: { min: 1, max: 600 },
+			moveDelay: 0,
+			randomizeMoveDelay: true,
+			overshootThreshold: 500,
 		},
 		typing: {
 			mistakes: {
@@ -186,7 +189,7 @@ export default class ImposterClass {
 			this.browser = await Promise.race([
 				puppeteer.connect(params),
 				new Promise((_, reject) =>
-					setTimeout(() => reject(new Error('Connection timeout')), 5000),
+					setTimeout(() => reject(new Error('Connection timeout')), 10000),
 				),
 			]);
 		} catch (error) {
@@ -888,8 +891,9 @@ export default class ImposterClass {
 		} else {
 			selector = 'function' === typeof selector ? await selector() : selector;
 
-			if (selector.hasOwnProperty('el')) {
-				await selector.el.select(String(value));
+			if (typeof selector === 'object' && 'el' in selector) {
+				const selectorWithEl = selector as iElement;
+				await selectorWithEl.el.select(String(value));
 			}
 		}
 
@@ -1147,12 +1151,12 @@ export default class ImposterClass {
 
 	// Waits for the element to dissapear from DOM (with ignoreVisibility = false disspear visually)
 	async waitForDissapear(
-		selector,
+		selector: string,
 		text: string | null = null,
 		ignoreVisibility: boolean = true,
 		timeout: number = 120,
 		startTime: number = Date.now(),
-	) {
+	): Promise<boolean> {
 		await this.wait(1); // wait is here so it will be enough time to render the element
 
 		const { el, target, type } = await this.findElementAnywhere(
@@ -1189,7 +1193,7 @@ export default class ImposterClass {
 		ignoreVisibility: boolean = false,
 		noDigging: boolean = false,
 		startTime: number = Date.now(),
-	) {
+	): Promise<iElement | false> {
 		const selectorOriginal = await selector;
 		const textOriginal = text;
 
@@ -1204,8 +1208,8 @@ export default class ImposterClass {
 				) {
 					// if no changes in selector and text after translating it - failing
 					return {
-						target: false,
-						el: false,
+						target: undefined,
+						el: undefined,
 						type: 'page',
 					};
 				}
@@ -1220,8 +1224,8 @@ export default class ImposterClass {
 				if (selector === selectorOriginal && text === textOriginal) {
 					// if no changes in selector and text after translating it - failing
 					return {
-						target: false,
-						el: false,
+						target: undefined,
+						el: undefined,
 						type: 'page',
 					};
 				}
@@ -1472,9 +1476,10 @@ export default class ImposterClass {
 				);
 			}
 
+			console.info(`el NOT found`);
 			return {
-				target: false,
-				el: false,
+				target: undefined,
+				el: undefined,
 				type: 'page',
 			};
 		} catch (e) {
