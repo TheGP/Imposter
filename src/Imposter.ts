@@ -311,14 +311,25 @@ export default class ImposterClass {
 	}
 
 	// Attaches all needed helpers to the page
-	async attachAllToPage(): Promise<void> {
+	async attachAllToPage({
+		page,
+		cursorPosition,
+	}: {
+		page?: Page;
+		cursorPosition?: Vector | null;
+	} = {}): Promise<void> {
 		console.info(`attachAllToPage`);
+
+		if (page) {
+			this.page = page;
+		}
+
 		//await installMouseHelper(this.page);
-		this.cursor = createCursor(
-			this.page,
-			await getRandomPagePoint(this.page),
-			true,
-		);
+		const initialPosition = cursorPosition
+			? cursorPosition
+			: await getRandomPagePoint(this.page);
+
+		this.cursor = createCursor(this.page, initialPosition, true);
 		this.scroller = await humanScroll(this.page);
 		this.page.setDefaultNavigationTimeout(0);
 		//this.page.setBypassCSP(true);
