@@ -662,6 +662,7 @@ export default class ImposterClass {
 		timeout: number = 10,
 		attempt: number = 1,
 		triggerReplay: boolean = true,
+		ignoreIfDisabled: boolean = false,
 	): Promise<ElementHandle | boolean> {
 		console.log('click', selectorOrObj, text);
 		await this.waitTillHTMLRendered();
@@ -755,7 +756,7 @@ export default class ImposterClass {
 			}
 			return false;
 		});
-		if (isDisabled) {
+		if (!ignoreIfDisabled && isDisabled) {
 			console.info('waiting for el to become enabled');
 			await this.wait(0.3);
 			return await this.click(selectorOrObj, text, timeout);
