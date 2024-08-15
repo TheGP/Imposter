@@ -359,7 +359,11 @@ export default class ImposterClass {
 	}
 
 	// Open url
-	async goto(url: string, referer: null | string = null, forceRefresh = false): Promise<void> {
+	async goto(
+		url: string,
+		referer: null | string = null,
+		forceRefresh = false,
+	): Promise<void> {
 		this.recordAction('goto', [url]);
 
 		// If no page opened yet
@@ -378,7 +382,7 @@ export default class ImposterClass {
 					await page.bringToFront();
 					this.page = page;
 					await this.waitRandom(0.5, 2);
-					
+
 					if (forceRefresh) {
 						await this.page.reload();
 					}
@@ -395,6 +399,10 @@ export default class ImposterClass {
 						options.referer = referer;
 					}
 					await this.page.goto(url, options);
+				}
+			} else {
+				if (forceRefresh) {
+					await this.page.reload();
 				}
 			}
 		} catch (error) {
@@ -1110,7 +1118,14 @@ export default class ImposterClass {
 		const actionsHistoryRecordingPrev = this.actionsHistoryRecording;
 		if (cb) {
 			// Recording is there as it has callback function
-			this.recordAction('isThere', [selector, text, timeout, cb, cb2]);
+			this.recordAction('isThere', [
+				selector,
+				text,
+				timeout,
+				ignoreVisibility,
+				cb,
+				cb2,
+			]);
 			this.actionsHistoryRecording = false;
 		}
 
