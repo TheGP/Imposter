@@ -239,7 +239,7 @@ export default class ImposterClass {
 	// Finds the active tab and prepares it for work
 	// failEasy - if true will expect it will be no active tabs available, and wont try to fix the problem
 	async attachToActiveTab(failEasy = false, sec = 0): Promise<void> {
-		console.info(`attachToActiveTab`);
+		console.info(`attachToActiveTab`, failEasy, sec, this.browser);
 		const pages = await this.browser.pages();
 		// this will return list of active tab (which is pages object in puppeteer)
 		const visiblePages = await filter(pages, async (p) => {
@@ -263,7 +263,7 @@ export default class ImposterClass {
 			}
 			console.info(`New page because of no active tab`);
 			await this.newPage();
-			return this.attachToActiveTab();
+			return this.attachToActiveTab(failEasy, ++sec);
 		}
 
 		if (activeTab) {
@@ -271,6 +271,8 @@ export default class ImposterClass {
 			this.page = activeTab;
 			await this.attachAllToPage();
 		}
+	}
+
 	// ::TODO:: option to match with GET-params in url
 	async findTab({
 		url,
