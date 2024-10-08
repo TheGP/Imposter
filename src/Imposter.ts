@@ -673,9 +673,14 @@ export default class ImposterClass {
 		attempt: number = 1,
 		triggerReplay: boolean = true,
 		ignoreIfDisabled: boolean = false,
+		waitForRender = true,
 	): Promise<ElementHandle | boolean> {
 		console.log('click', selectorOrObj, text);
-		await this.waitTillHTMLRendered();
+
+		if (waitForRender) {
+			await this.waitTillHTMLRendered();
+		}
+
 		if (triggerReplay) {
 			this.recordAction('click', [selectorOrObj, text, timeout]);
 		}
@@ -817,7 +822,9 @@ export default class ImposterClass {
 			}
 		}
 
-		await this.waitTillHTMLRendered();
+		if (waitForRender) {
+			await this.waitTillHTMLRendered();
+		}
 
 		return el;
 	}
