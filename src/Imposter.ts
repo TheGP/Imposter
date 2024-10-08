@@ -1003,7 +1003,15 @@ export default class ImposterClass {
 	// close page with mouse going to the close button
 	async close() {
 		await this.closeTab(false);
-		await this.browser.close();
+
+		if (this.browser) {
+			try {
+				await this.browser.close();
+			} catch (e) {
+				console.warn(`Failed to close browser: ${e}`);
+			}
+		}
+
 		this.cursor = null;
 		this.browser = null;
 		this.page = null;
@@ -1645,6 +1653,11 @@ export default class ImposterClass {
 				console.error('context error, restarting...');
 				return await this.findElementAnywhere(selector, text, timeout); // resetting only startTime
 			} else {
+				if (!this.page) {
+					console.log(`Page is not defined`);
+					throw e;
+				}
+
 				console.error('UNKNOWN ERROR', e, e.stack);
 				const err = new Error();
 				if (err.stack) {
