@@ -967,10 +967,12 @@ export default class ImposterClass {
 		}
 
 		try {
-			await this.cursor.toggleRandomMove(false);
+			if (this.cursor) {
+				await this.cursor.toggleRandomMove(false);
+			}
 			await this.attachToActiveTab(true);
 		} catch (e) {
-			console.error(e);
+			console.error(e, e.stack);
 		}
 	}
 
@@ -1006,6 +1008,12 @@ export default class ImposterClass {
 
 		if (this.browser) {
 			try {
+				console.log(`Imposter: closing browser`);
+				// Have to close all pages or browser may not close?
+				const pages = await this.browser.pages();
+				for (let i = 0; i < pages.length; i++) {
+					await pages[i].close();
+				}
 				await this.browser.close();
 			} catch (e) {
 				console.warn(`Failed to close browser: ${e}`);
