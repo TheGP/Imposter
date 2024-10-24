@@ -192,10 +192,14 @@ export default class ImposterClass {
 					setTimeout(() => reject(new Error('Connection timeout')), 10000),
 				),
 			]);
+			if (!this.browser.connected) {
+				throw new Error('Browser connection failed');
+			}
+			this.page = null;
 		} catch (error) {
 			// Restarting connection
 			if (5 > attempt) {
-				console.info(`Retrying connection`, attempt);
+				console.info(`Retrying connection`, attempt, error);
 				this.wait(0.1);
 				return this.connect(webSocketLink, ++attempt);
 			}
