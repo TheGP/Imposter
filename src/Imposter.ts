@@ -199,7 +199,7 @@ export default class ImposterClass {
 		} catch (error) {
 			// Restarting connection
 			if (5 > attempt) {
-				console.info(`Retrying connection`, attempt, error);
+				console.debug(`Retrying connection`, attempt, error);
 				this.wait(0.1);
 				return this.connect(webSocketLink, ++attempt);
 			}
@@ -243,19 +243,19 @@ export default class ImposterClass {
 	// Finds the active tab and prepares it for work
 	// failEasy - if true will expect it will be no active tabs available, and wont try to fix the problem
 	async attachToActiveTab(failEasy = false, sec = 0): Promise<void> {
-		console.info(`attachToActiveTab`, failEasy, sec, this.browser);
+		console.debug(`attachToActiveTab`, failEasy, sec, this.browser);
 		const pages = await this.browser.pages();
 		// this will return list of active tab (which is pages object in puppeteer)
 		const visiblePages = await filter(pages, async (p) => {
 			const state = await p.evaluate(() => document.visibilityState);
-			//console.info('page=', p.url(), 'state=', state);
+			//console.debug('page=', p.url(), 'state=', state);
 			return state === 'visible' && !p.url().startsWith('devtools://'); //
 		});
-		//console.info('visiblePages', JSON.stringify(visiblePages))
+		//console.debug('visiblePages', JSON.stringify(visiblePages))
 		const activeTab = visiblePages[0];
 
 		if (activeTab === this.page) {
-			console.info('This tab is already attached, ignoring');
+			console.debug('This tab is already attached, ignoring');
 			return;
 		}
 
@@ -265,13 +265,13 @@ export default class ImposterClass {
 				await this.wait(1);
 				return this.attachToActiveTab(failEasy, ++sec);
 			}
-			console.info(`New page because of no active tab`);
+			console.debug(`New page because of no active tab`);
 			await this.newPage();
 			return this.attachToActiveTab(failEasy, ++sec);
 		}
 
 		if (activeTab) {
-			console.info('activeTab', activeTab.url());
+			console.debug('activeTab', activeTab.url());
 			this.page = activeTab;
 			await this.attachAllToPage();
 		}
@@ -324,7 +324,7 @@ export default class ImposterClass {
 		page?: Page;
 		cursorPosition?: Vector | null;
 	} = {}): Promise<void> {
-		console.info(`attachAllToPage`);
+		console.debug(`attachAllToPage`);
 
 		if (page) {
 			this.page = page;
@@ -374,7 +374,7 @@ export default class ImposterClass {
 
 		// If no page opened yet
 		if (!this.page) {
-			console.info('opening new page');
+			console.debug('opening new page');
 			await this.newPage();
 		}
 
@@ -448,14 +448,14 @@ export default class ImposterClass {
 			'object' === typeof selector
 				? selector
 				: await this.findElementAnywhere(selector);
-		console.info('type=', type);
+		console.debug('type=', type);
 		if (!el || !(el instanceof ElementHandle)) {
 			return await this.replayPreviousAction([
 				'NO ELEMENT HAS FOUND',
 				selector,
 			]);
 		}
-		console.info('target', target, selector, el); // false #register-verification-phone-number
+		console.debug('target', target, selector, el); // false #register-verification-phone-number
 		if (!(await this.scrollTo(el, target))) {
 			return type(selector, string, keepExistingText); // reloading selector
 		}
@@ -482,7 +482,7 @@ export default class ImposterClass {
 
 		// Removing text from the input if it exists
 		if (!keepExistingText) {
-			console.info('current input value=', value);
+			console.debug('current input value=', value);
 
 			// If text is partly typed already - just using fixing mistake to add missing text
 			if (0 === string.indexOf(value) && '' !== value) {
@@ -582,7 +582,7 @@ export default class ImposterClass {
 			);
 			// In case no cursor inside the field for some reason, focusing it
 			if (null === cursorPosition) {
-				console.info(`cursorPosition`, cursorPosition);
+				console.debug(`cursorPosition`, cursorPosition);
 				//await target.evaluate(el => el.focus(), el);
 				await this.clickSimple(el);
 				await this.wait(0.3);
@@ -600,11 +600,11 @@ export default class ImposterClass {
 				}
 			}
 		}
-		console.info('cursorPosition', cursorPosition);
+		console.debug('cursorPosition', cursorPosition);
 
 		// Move cursor to the right position using arrow keys
 		let arrowKeyCount = diffIndex - Number(cursorPosition);
-		console.info(
+		console.debug(
 			`arrowKeyCount=`,
 			arrowKeyCount,
 			`diffIndex=`,
@@ -631,7 +631,7 @@ export default class ImposterClass {
 		}
 
 		// Remove extra symbol if the next one is correct
-		//console.info(currentValue[diffIndex + 1], '===', shouldbeValue[diffIndex]);
+		//console.debug(currentValue[diffIndex + 1], '===', shouldbeValue[diffIndex]);
 		if (
 			currentValue[diffIndex + 1] === shouldbeValue[diffIndex] ||
 			'undefined' === typeof shouldbeValue[diffIndex]
@@ -727,7 +727,7 @@ export default class ImposterClass {
 				return false;
 			}
 		}
-		console.info('element found:', type, el, JSON.stringify(target));
+		console.debug('element found:', type, el, JSON.stringify(target));
 
 		let res = await this.isElementInView(el, target);
 		if (null === res) {
@@ -742,7 +742,7 @@ export default class ImposterClass {
 		}
 
 		if (!res.isInView) {
-			console.info('element is not in the view!');
+			console.debug('element is not in the view!');
 			// Checking if element is inside scrollable div
 			const closestScrollableDiv = await el.evaluateHandle(
 				(element: Element | null) => {
@@ -790,7 +790,7 @@ export default class ImposterClass {
 			return false;
 		});
 		if (!ignoreIfDisabled && isDisabled) {
-			console.info('waiting for el to become enabled');
+			console.debug('waiting for el to become enabled');
 			await this.wait(0.5);
 			return await this.click(
 				selectorOrObj,
@@ -910,11 +910,11 @@ export default class ImposterClass {
 		}
 
 		if (res.isInView) {
-			console.info('element is in the view');
+			console.debug('element is in the view');
 		}
 
 		while (!res!.isInView) {
-			console.info('scrolling to el', res.direction);
+			console.debug('scrolling to el', res.direction);
 			await this.waitRandom(0.1, 1.5);
 			const scroller = await humanScroll(target);
 			await scroller.scroll(1, res.direction);
@@ -953,7 +953,7 @@ export default class ImposterClass {
 
 		// ::TRICKY:: normal 'while' is not paused by await
 		do {
-			console.info('reading');
+			console.debug('reading');
 			await this.waitRandom(3, 10);
 			await this.scroller.scroll(1, 'down');
 		} while (!(await isScrolledToBottom()) && Date.now() < finishTime);
@@ -1052,7 +1052,7 @@ export default class ImposterClass {
 		}
 
 		if ('string' === typeof selector) {
-			console.info(
+			console.debug(
 				'in imposter',
 				selector,
 				value.toString(),
@@ -1166,7 +1166,7 @@ export default class ImposterClass {
 			true,
 		);
 		const isThere = el && el.asElement() ? true : false;
-		console.info(`isThere`, 'res=', isThere, [
+		console.debug(`isThere`, 'res=', isThere, [
 			selector,
 			text,
 			timeout,
@@ -1413,7 +1413,7 @@ export default class ImposterClass {
 			text = this.translate(text);
 		}
 
-		console.info(
+		console.debug(
 			`findElementAnywhere`,
 			selector,
 			text,
@@ -1512,7 +1512,7 @@ export default class ImposterClass {
 				const frames = this.page.frames();
 				//console.log('frames', frames);
 				for (const frame of frames) {
-					//console.info(`searching in frame = ` + await frame.url())
+					//console.debug(`searching in frame = ` + await frame.url())
 
 					const el = await frame.evaluateHandle(
 						(ignoreVisibility, selector, text) => {
@@ -1614,7 +1614,7 @@ export default class ImposterClass {
 				this.callbackFailToFindElement &&
 				!this.callbackFailToFindElementExecuting
 			) {
-				console.info(
+				console.debug(
 					`Trying to execute special callback function`,
 					this.actionsHistoryRecording,
 				);
@@ -1643,7 +1643,7 @@ export default class ImposterClass {
 				(this.dictionary.hasOwnProperty(this.lang) ||
 					0 < Object.keys(this.dictionary).length)
 			) {
-				console.info(`Trying to translate or not translate`);
+				console.debug(`Trying to translate or not translate`);
 				return this.findElementAnywhere(
 					selectorOriginal,
 					textOriginal,
@@ -1654,7 +1654,7 @@ export default class ImposterClass {
 				);
 			}
 
-			console.info(`el NOT found`);
+			console.debug(`el NOT found`);
 			return {
 				target: undefined,
 				el: undefined,
@@ -1833,7 +1833,7 @@ export default class ImposterClass {
 			where = this.page;
 		}
 
-		console.info('typeof selector=', typeof selector);
+		console.debug('typeof selector=', typeof selector);
 		const el =
 			'string' === typeof selector ? await this.page.$(selector) : selector;
 		if (el) {
@@ -1849,7 +1849,7 @@ export default class ImposterClass {
 					(element) => (element as any).type ?? null,
 					el,
 				);
-				console.info('input type=', type);
+				console.debug('input type=', type);
 				if ('checkbox' === type) {
 					return await where.evaluate(
 						(element: Element) => (element as HTMLInputElement).checked,
@@ -1872,7 +1872,7 @@ export default class ImposterClass {
 		//this.page.waitForNavigation({waitUntil: 'networkidle2'})
 		const frame = this.page.frames().find((f) => {
 			if (debug) {
-				console.info(f.url());
+				console.debug(f.url());
 			}
 
 			if (startWith instanceof RegExp) {
@@ -1934,7 +1934,7 @@ export default class ImposterClass {
 		target: Page | Frame = this.page,
 		attempt = 0,
 	): Promise<{ isInView: boolean; direction: Direction } | null> {
-		//console.info('isElementInView', selector);
+		//console.debug('isElementInView', selector);
 		const elementHandle =
 			'string' === typeof selector ? await target.$(selector) : selector;
 
@@ -1946,7 +1946,7 @@ export default class ImposterClass {
 		// ::TRICKY:: do not use puppeteer's function as it calculates y for a whole page, not iframe only
 		try {
 			const boundingBox = await target.evaluate((element) => {
-				console.info(
+				console.debug(
 					`Getting getBoundingClientRect of:`,
 					element,
 					element.getBoundingClientRect(),
@@ -2026,7 +2026,7 @@ export default class ImposterClass {
 						(boundingBox.top >= 0 && boundingBox.top <= window.innerHeight) ||
 						(boundingBox.bottom >= 0 &&
 							boundingBox.bottom <= window.innerHeight);
-					console.info(
+					console.debug(
 						'b height',
 						boundingBox.height,
 						'b top',
@@ -2044,7 +2044,7 @@ export default class ImposterClass {
 						boundingBox.bottom < window.innerHeight
 							? 0
 							: window.innerHeight - boundingBox.bottom;
-					console.info(
+					console.debug(
 						'invisibleTop',
 						invisibleTop,
 						'invisibleBottom',
@@ -2064,7 +2064,7 @@ export default class ImposterClass {
 				curr.visible > acc.visible ? curr : acc,
 			);
 
-			console.info('mostVisibleEl:', mostVisibleEl);
+			console.debug('mostVisibleEl:', mostVisibleEl);
 			return mostVisibleEl.el;
 		} catch (e) {
 			console.error('findFirstElementOnScreen fail:', e);
@@ -2154,7 +2154,7 @@ export default class ImposterClass {
 		// waiting user to solve catcha before clicking the buttons
 		const fcToken = await this.getAttribute('[name="fc-token"]', 'value'); // FunCaptcha-Token
 		//console.log('CAPTCHA');
-		console.info('fcToken', fcToken);
+		console.debug('fcToken', fcToken);
 		//console.log('pageurl', this.page.url());
 
 		const matches = fcToken.match(/pk=([^|]+)\|.*?surl=([^|]+)/);
@@ -2191,7 +2191,7 @@ export default class ImposterClass {
 			let readyState = await this.page.evaluate(() => {
 				return document.readyState;
 			});
-			//console.info(`readyState=`, readyState);
+			console.debug(`readyState=`, readyState, this.page.url());
 
 			const start = Date.now();
 			if ('loading' === readyState) {
@@ -2216,11 +2216,11 @@ export default class ImposterClass {
 
 				if ('interactive' === readyState) {
 					// holding for 1 more sec and then releasing
-					console.info(`readyState became interactive`);
+					console.debug(`readyState became interactive`);
 					await this.wait(1);
 				} else {
 					// if "complete" then releasing right away
-					console.info(`readyState became complete`);
+					console.debug(`readyState became complete`);
 				}
 			}
 
@@ -2248,9 +2248,9 @@ export default class ImposterClass {
 			};
 
 			let iframesReady = await isAllIframesReady();
-			//console.log(`iframesReady`, iframesReady);
+			console.debug(`iframesReady`, iframesReady);
 			while (!iframesReady) {
-				console.info(`waiting for frames loaded`);
+				console.debug(`waiting for frames loaded`);
 				await this.wait(0.2);
 				iframesReady = await isAllIframesReady();
 
@@ -2289,7 +2289,7 @@ export default class ImposterClass {
 					() => document.body.innerHTML.length,
 				);
 
-				//console.info('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
+				//console.debug('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
 
 				// if change is small - do not take it into account
 				if (
@@ -2303,7 +2303,7 @@ export default class ImposterClass {
 				}
 
 				if (countStableSizeIterations >= minStableSizeIterations) {
-					console.info('Page rendered fully..');
+					console.debug('Page rendered fully..');
 					break;
 				}
 
@@ -2351,7 +2351,7 @@ export default class ImposterClass {
 					didntChangeCb &&
 					Date.now() - start > didntChangeCbExecuted * timeout * 1000
 				) {
-					console.info(`Executing didntChangeCb`);
+					console.debug(`Executing didntChangeCb`);
 					await didntChangeCb();
 				}
 				if (Date.now() - start > timeoutNoChange * 1000) {
@@ -2630,7 +2630,7 @@ export default class ImposterClass {
 			this.actionsHistoryRecordingLocked = false; // Its the last action so we can turn off recording if it fails
 			const res = await this[action.func].apply(this, action.params);
 
-			console.info('this.actionsHistoryRecording = true');
+			console.debug('this.actionsHistoryRecording = true');
 			this.actionsHistoryRecording = true;
 			return res;
 		} else {
@@ -2692,7 +2692,7 @@ export default class ImposterClass {
 	// Wait random times
 	async waitRandom(min: number, max: number): Promise<void> {
 		const randomDelay = this.random(min, max);
-		console.info('waitRandom', randomDelay);
+		console.debug('waitRandom', randomDelay);
 		await this.wait(randomDelay);
 	}
 
@@ -2714,7 +2714,7 @@ export default class ImposterClass {
 	tryTranslate(string: any): any {
 		if ('string' !== typeof string) return string;
 
-		//console.info('tryTranslate', string);
+		//console.debug('tryTranslate', string);
 
 		if (this.dictionary.hasOwnProperty(this.lang)) {
 			for (const key in this.dictionary[this.lang]) {
