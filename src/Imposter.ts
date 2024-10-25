@@ -424,6 +424,17 @@ export default class ImposterClass {
 		this.attachAllToPage();
 	}
 
+	async switchPage(page: Page): Promise<boolean> {
+		if (!page) {
+			return false;
+		}
+		console.debug('makePageActive');
+		this.page = page;
+		await this.page.bringToFront();
+		this.attachAllToPage();
+		return true;
+	}
+
 	// Navigating + typing (backspace = ⌫)
 	// ::TODO:: check why it skips some spaces in big block of text on linkedin
 	// ::TODO:: click after text? (need to make it work together with removing current value)
