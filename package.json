@@ -10,7 +10,7 @@
   "main": "./dist/Imposter.js",
   "types": "./dist/Imposter.d.ts",
   "author": "Eugene Bos, eugenebos.com",
-  "license": "MIT",
+  "license": "See LICENSE.md",
   "repository": {
     "type": "git",
     "url": "git@github.com:TheGP/imposter.git"
